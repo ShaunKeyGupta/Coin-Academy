@@ -230,22 +230,22 @@ function drillReady(){const c=getDrillCfg();return !!(c.url&&c.pass);}
 function moduleDrill(id){return DRILL_RUBRICS[id];}
 
 const DRILL_PERSONAS=[
- {name:'Price Shopper',opening:"Yeah hi, what do you pay per gram for gold?",behavior:"You only want a number over the phone and you push for it. You name other shops. You resist booking. You warm up only if the setter makes the two-number and floor offer compelling. You never say how much you have unless impressed."},
- {name:'Inherited Collection',opening:"Hi, my father passed and left a bunch of coins and some gold. I have no idea what any of it is worth.",behavior:"You are unsure and a little emotional. You worry about being taken advantage of. You respond well to reassurance, a free no-obligation appraisal, and the floor you cannot lose on. You genuinely do not know what you have."},
- {name:'Skeptical Researcher',opening:"I looked my coins up online and they are worth about 3000 dollars. Can you beat that?",behavior:"You quote online prices as if they are fact and you are a little combative. You are won over only if the setter explains asking price versus sold price and the auction number, without quoting your items."},
- {name:'Busy Seller',opening:"I really do not have time to come in. Can you just give me a quote over the phone?",behavior:"You are rushed and want it handled fast. You resist appointments. You respond to in and out, free, and fast, plus one specific easy time."},
- {name:'Suspicious Caller',opening:"Why will nobody just tell me a price? Is this some kind of scam?",behavior:"You distrust the runaround. You calm down only with transparency: the two numbers, the floor, the guarantee, and an honest reason no number can be given sight unseen."},
- {name:'Whale',opening:"I have a fairly large collection, a few hundred coins plus some bullion, and I want to know it is worth my time to come to you.",behavior:"You are cautious and value your time. You want to know they can handle volume and get top dollar. You respond to the auction upside and being treated as a serious seller. You never state a dollar amount."}
+ {name:'Price Shopper',opening:"Yeah hi, what do you pay per gram for gold?",behavior:"You have real gold jewelry and a couple of gold coins worth well over 500 dollars, but you do not say what you have unless the rep asks good questions. You demand a price on the phone and you name other shops. You do NOT accept a firm dollar number; if the rep gives you one, you push for more and stay unsold. You only soften when the rep acknowledges your concern and tells you others ask the same. After you have pushed for a price about twice, you will accept a rough range, or an incentive like beating a written offer or a free silver eagle for coming in. You agree to come in only when the rep offers two specific times. If they dodge or pressure you, stay resistant."},
+ {name:'Inherited Box (unsure)',opening:"Hi, my dad passed and left me a box of coins and some jewelry. I have no idea what any of it is or what it is worth.",behavior:"You genuinely do not know what you have, and it could be valuable or could be junk. You describe items poorly and you are a little emotional and worried about being taken advantage of. You warm up when the rep asks calm qualifying questions or asks you to text photos so they can tell you what you have. You agree to send photos or come in when the rep is reassuring and offers two specific times. You resist if the rep just quotes a price or rushes you."},
+ {name:'Online Says More',opening:"I looked my coins up online and they are worth about 3000 dollars. Can you beat that?",behavior:"You have genuine collectible coins worth over 500 dollars. You quote online prices as fact and you are a little combative. You only come around when the rep explains that online shows asking prices, not what items actually sell for, and frames the shop as a collectors association that shows real value. You agree to come in when offered two specific times. You resist if the rep argues with you or just throws out a number."},
+ {name:'Is This A Scam',opening:"Why will nobody just tell me a price? Is this some kind of scam?",behavior:"You have real silver and a few decent coins worth over 500 dollars, but you are guarded and distrustful. You calm down only when the rep gives an honest reason that a price on unseen items is just a guess, and that in person their experts give a real price. You agree to come in when the rep is transparent and offers two specific times. You stay cold if the rep is evasive or pushy."},
+ {name:'Wants Retail',opening:"Another place offered me more, and honestly I think my stuff is worth way more than that.",behavior:"You have a genuinely valuable collectible worth well over 500 dollars and you expect close to retail. You have already been pushing on price. You only get satisfied when the rep stops haggling on cash and offers consignment: selling it at auction for full value with the reserve floor set at the shop's cash price, so you cannot get less, only more. You agree to come in to see both numbers when offered two specific times. You stay unhappy if the rep just repeats a low cash number."},
+ {name:'Junk Caller',opening:"I have a whole jewelry box of stuff, necklaces and rings, lots of it. Can you tell me what it is worth?",behavior:"Your items are costume and plated jewelry and common coins, worth very little, well under 500 dollars, but you think they might be valuable. The RIGHT outcome here is NOT an in-person appointment. You respond well when the rep asks for photos, gently tells you what the items actually are, and offers a free education packet on what to look for. You are happy to leave a positive review only if the rep was genuinely helpful and you feel good about it. You should NOT be booked for a visit, and if the rep pushes hard to schedule you in person, that is the wrong move and you can sense the time-waste. You are satisfied by the help and the packet, not by a sale."}
 ];
 
 const DRILL_RUBRICS={
  'm1.3':{script:'Appointment Setter phone call',beats:[
-   {key:'two_numbers',label:'Framed the two-number offer (instant cash today versus auction value)'},
-   {key:'floor',label:'Named the reserve floor set at the cash price (cannot get less, only more)'},
-   {key:'no_quote',label:'Did NOT quote a specific dollar figure on items they could not see'},
-   {key:'guarantee',label:'Used a guarantee (beat any written offer, or tell you who pays more)'},
-   {key:'two_option_close',label:'Closed on two specific times, not an open-ended whenever-works'},
-   {key:'photo_ask',label:'Asked the caller to text photos to the direct line'}
+   {key:'acknowledge',label:'Acknowledged the concern or what the caller has, without arguing'},
+   {key:'associate',label:'Normalized it (others ask the same, or past customers had a good experience)'},
+   {key:'triage',label:'Read the lead as qualified, unsure, or junk and routed it right (book qualified over 500 dollars, photos when unsure, education packet for junk, did not schedule junk)'},
+   {key:'objection_move',label:'Used the right reframe for the objection raised (asking versus sold, honest reason, consignment with the cash-price floor, spouse welcome)'},
+   {key:'price_discipline',label:'No firm dollar figure on unseen items, a range only after two price pushes, and priced junk only after photos'},
+   {key:'ask_close',label:'Asked for the next step and, when booking, closed on two specific times, confirmed the appointment, and got a photo'}
  ]}
 };
 
@@ -256,35 +256,35 @@ function drillQuota(id){return DRILL_QUOTA[id]||{reps:5,score:80};}
 const DRILL_OBJECTIONS={
  'm1.3':[
   {id:'price',name:'Just give me a price on the phone',line:"Look, I just want a number. What do you pay per gram for gold?",
-   behavior:"You demand a phone price over and over and name other shops. You only let it go if the rep reframes to the two numbers and the floor without quoting a figure. If they cave and give a number, you push for more and stay unsold.",
-   model:"Fair, everyone asks. I will not guess on something I cannot see and risk selling you short. In person you get two numbers, cash today or auction value, with a floor at our cash price so you cannot lose. [time A] or [time B]?",
-   principle:"Reframe price to value and certainty. Never quote sight unseen.",
-   rubric:[{key:'no_quote',label:'Refused to quote a dollar figure on unseen items'},{key:'two_numbers',label:'Reframed to the two-number offer'},{key:'floor',label:'Named the floor you cannot lose on'}]},
-  {id:'spouse',name:'I need to talk to my spouse',line:"I cannot decide anything without talking to my husband first.",
-   behavior:"You keep deferring to your spouse. You book only if the rep includes the spouse and removes risk (free, no obligation) and offers a specific time.",
-   model:"Smart to include them. Bring them or get them on speaker, it is a free appraisal with no obligation, so it is an easy yes for both of you. [time A] or [time B]?",
-   principle:"Lower risk and include the decision maker, then close on a time.",
-   rubric:[{key:'no_obligation',label:'Removed risk (free, no obligation) and included the spouse'},{key:'two_option_close',label:'Closed on two specific times'}]},
+   behavior:"You demand a phone price over and over and name other shops. You do not accept a firm dollar number; if the rep caves to one, you push for more and stay unsold. After you have pushed about twice, you will accept a rough range or an incentive (beating a written offer, or a free silver eagle for coming in) plus two specific times.",
+   model:"Fair, you do not want to drive out for nothing. Everyone asks me that first. I will not guess on something I cannot see and risk selling you short or overselling. Tell you what, we beat any written offer, and we will give you a free silver eagle just for coming in. Are you free [time A] or [time B]?",
+   principle:"Hold the price line, normalize it, then trade an incentive for the appointment.",
+   rubric:[{key:'acknowledge',label:'Acknowledged the concern'},{key:'price_discipline',label:'Held the line, no firm number, range only after two pushes'},{key:'ask_close',label:'Used an incentive and closed on two times'}]},
   {id:'online',name:'I looked it up online',line:"I checked online and my coins are worth about 3000 dollars. Can you beat that?",
-   behavior:"You treat online listings as fact and stay combative until the rep explains asking price versus sold price and the auction number, without quoting your items.",
-   model:"Good, that helps. Online shows asking prices, not what things actually sell for, which is exactly why our auction number matters, it is what real collectors pay. We will show both side by side in person. [time A] or [time B]?",
-   principle:"Separate asking price from sold price, pivot to the auction number.",
-   rubric:[{key:'asking_vs_sold',label:'Explained asking price versus real sold price'},{key:'no_quote',label:'Did not quote their specific items over the phone'},{key:'two_option_close',label:'Closed on two times'}]},
+   behavior:"You treat online listings as fact and stay combative until the rep explains asking price versus what items actually sell for and frames the shop as a collectors association. You agree to come in when offered two times.",
+   model:"Good, glad you did some homework. A lot of callers check online first. Online shows asking prices, not what things actually sell for. We are a collectors association, so in person we show you what your items are really worth and what they actually sell for. What works, [time A] or [time B]?",
+   principle:"Asking price versus sold price, collectors association, then book.",
+   rubric:[{key:'objection_move',label:'Explained asking versus real sold price as a collectors association'},{key:'acknowledge',label:'Acknowledged their research'},{key:'ask_close',label:'Closed on two times'}]},
   {id:'scam',name:'Is this a scam?',line:"Why will nobody just tell me a price? Is this some kind of scam or what?",
-   behavior:"You distrust the runaround and stay guarded until the rep is transparent: the two numbers, the floor, the guarantee, and an honest reason no number can be given sight unseen.",
-   model:"Totally fair to be careful. Here is the honest reason: a price on something I cannot see is a guess, and a guess either inflates your hopes or sells you short. In person you get two real numbers, a floor you cannot lose on, and we beat any written offer. [time A] or [time B]?",
-   principle:"Defuse distrust with transparency and an honest reason.",
-   rubric:[{key:'transparency',label:'Gave an honest reason and the transparent two-number plus floor offer'},{key:'guarantee',label:'Used a guarantee'}]},
-  {id:'lowball',name:'That is lower than I expected',line:"I was hoping for a lot more than that. That seems low.",
-   behavior:"You are disappointed and ready to walk. You stay only if the rep pivots to consignment and the floor (auction upside, cannot get less than cash).",
-   model:"I hear you. If cash today is not enough, this is exactly when consignment wins: we sell it at auction for full value, and we set the floor at our cash price, so you cannot get less, only more. Want me to walk you through that?",
-   principle:"Turn a low cash reaction into the consignment and floor pivot.",
-   rubric:[{key:'consignment_pivot',label:'Pivoted to consignment as the higher path'},{key:'floor',label:'Named the floor (cannot get less than cash)'}]},
+   behavior:"You distrust the runaround and stay guarded until the rep gives an honest reason a number cannot be given sight unseen and points to a real in-person price from their experts. You agree to come in when offered two times.",
+   model:"Totally fair to be careful. People ask that all the time, and it is smart to. The honest reason is a price on something I cannot see is a guess, and a guess will either sell you short or get your hopes up. I do not want to do that to you. In person our experts give you a real price on what your items are actually trading for. What works, [time A] or [time B]?",
+   principle:"Honest reason, a real in-person price, then book.",
+   rubric:[{key:'objection_move',label:'Gave the honest reason and the in-person real-price answer'},{key:'acknowledge',label:'Acknowledged the caution'},{key:'ask_close',label:'Closed on two times'}]},
+  {id:'spouse',name:'I need to talk to my spouse',line:"I cannot decide anything without talking to my husband first.",
+   behavior:"You keep deferring to your spouse. You book only if the rep welcomes the spouse, notes the appraisal is free, and offers two specific times.",
+   model:"Smart to include them. Most folks want a second set of eyes on their collection. You can bring them with you, or get them on speaker now if they are there. The appraisal with our expert is free. Does [time A] or [time B] work?",
+   principle:"Welcome the spouse, note it is free, then book.",
+   rubric:[{key:'acknowledge',label:'Welcomed the spouse'},{key:'associate',label:'Normalized wanting a second opinion'},{key:'ask_close',label:'Closed on two times'}]},
+  {id:'lowball',name:'Lower than I expected or someone offered more',line:"Another place offered me more, and I think it is worth way more than that.",
+   behavior:"You are a qualified caller who expects close to retail and have already pushed on price. You stay unhappy until the rep offers consignment with the reserve floor at the cash price. You agree to come in to see both numbers when offered two times.",
+   model:"I hear you. It happens a lot, especially with collectibles. That is exactly why we offer consignment for items people expect more from. We sell it at auction for full value with the reserve floor at our cash price, so you cannot get less, only more. Let us get you in to see both numbers. [time A] or [time B]?",
+   principle:"Consignment with the cash-price floor, then book to see both numbers.",
+   rubric:[{key:'objection_move',label:'Offered consignment with the floor at the cash price'},{key:'acknowledge',label:'Acknowledged the expectation'},{key:'ask_close',label:'Closed on two times'}]},
   {id:'think',name:'I want to think about it',line:"Let me think about it and maybe I will call back.",
-   behavior:"You stall. You book only if the rep makes acting easy and low-risk and gives a concrete next step and time, without being pushy.",
-   model:"Of course. The easy first step costs you nothing: text me a couple photos so we can get the real numbers ready, then you decide with everything in front of you. [time A] or [time B] to come see them?",
-   principle:"Shrink the next step and remove risk instead of pressuring.",
-   rubric:[{key:'easy_next_step',label:'Offered a small, no-risk next step'},{key:'two_option_close',label:'Closed on two times'},{key:'photo_ask',label:'Asked for photos'}]}
+   behavior:"You stall. You move forward only if the rep makes the next step small and easy: text a couple of photos so they can get you a real number, then book a time after, without pressure.",
+   model:"Of course, no rush. Most people like to sleep on it. If you can text me a couple of photos of what you have, I can start getting you a real number, then you decide with everything in front of you. When should we get you in after that, [time A] or [time B]?",
+   principle:"Shrink the next step to photos, then book.",
+   rubric:[{key:'objection_move',label:'Moved to photos as the easy next step'},{key:'ask_close',label:'Booked a time after the photos'},{key:'associate',label:'Normalized wanting to think'}]}
  ]
 };
 function moduleObjections(id){return DRILL_OBJECTIONS[id]||null;}
