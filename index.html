@@ -146,6 +146,18 @@ tr:hover td{background:rgba(201,162,39,.04)}
 .stat .n{font-family:'Fraunces';font-size:34px;font-weight:700;color:var(--gold-bright)}
 .stat .l{font-size:12px;color:var(--cream-dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
 .config-row{display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.dchat{margin-top:16px;display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:6px 2px}
+.dbubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:15px;line-height:1.4}
+.dcust{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.drep{align-self:flex-end;background:rgba(201,162,39,.16);border:1px solid var(--line)}
+.dwho{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--cream-dim);margin-bottom:3px}
+.dtyping{letter-spacing:3px;color:var(--cream-dim)}
+.dinrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.dinput{flex:1;min-width:200px;background:var(--navy-soft,rgba(255,255,255,.04));border:1px solid var(--line);color:var(--cream);padding:12px 14px;border-radius:10px;font-size:15px;font-family:inherit}
+.dinput:focus{outline:none;border-color:var(--gold)}
+.dscorehead{display:flex;align-items:center;gap:18px;margin:6px 0 16px}
+.dscorenum{font-family:'Fraunces';font-size:54px;font-weight:700;line-height:1}
+.dmodel{margin-top:6px;padding:8px 12px;border-left:3px solid var(--gold);background:rgba(201,162,39,.08);font-size:14px;border-radius:0 8px 8px 0}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(201,162,39,.12)}50%{box-shadow:0 0 0 7px rgba(201,162,39,.04)}}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .fade{animation:rise .45s ease both}
@@ -210,7 +222,72 @@ function buildModuleQuestions(mod){
 const MGR_STORE='sa_mgrpass_v2';
 function getMgrPass(){return load(MGR_STORE,'MANAGER-2024');}
 
-/* ---- coin key-date flashcards (no record) ---- */
+/* ============ AI ROLEPLAY DRILL ============ */
+const DRILL_CFG_STORE='sa_drillcfg_v1';
+function getDrillCfg(){return load(DRILL_CFG_STORE,{url:'',pass:''});}
+function setDrillCfg(c){save(DRILL_CFG_STORE,c);}
+function drillReady(){const c=getDrillCfg();return !!(c.url&&c.pass);}
+function moduleDrill(id){return DRILL_RUBRICS[id];}
+
+const DRILL_PERSONAS=[
+ {name:'Price Shopper',opening:"Yeah hi, what do you pay per gram for gold?",behavior:"You only want a number over the phone and you push for it. You name other shops. You resist booking. You warm up only if the setter makes the two-number and floor offer compelling. You never say how much you have unless impressed."},
+ {name:'Inherited Collection',opening:"Hi, my father passed and left a bunch of coins and some gold. I have no idea what any of it is worth.",behavior:"You are unsure and a little emotional. You worry about being taken advantage of. You respond well to reassurance, a free no-obligation appraisal, and the floor you cannot lose on. You genuinely do not know what you have."},
+ {name:'Skeptical Researcher',opening:"I looked my coins up online and they are worth about 3000 dollars. Can you beat that?",behavior:"You quote online prices as if they are fact and you are a little combative. You are won over only if the setter explains asking price versus sold price and the auction number, without quoting your items."},
+ {name:'Busy Seller',opening:"I really do not have time to come in. Can you just give me a quote over the phone?",behavior:"You are rushed and want it handled fast. You resist appointments. You respond to in and out, free, and fast, plus one specific easy time."},
+ {name:'Suspicious Caller',opening:"Why will nobody just tell me a price? Is this some kind of scam?",behavior:"You distrust the runaround. You calm down only with transparency: the two numbers, the floor, the guarantee, and an honest reason no number can be given sight unseen."},
+ {name:'Whale',opening:"I have a fairly large collection, a few hundred coins plus some bullion, and I want to know it is worth my time to come to you.",behavior:"You are cautious and value your time. You want to know they can handle volume and get top dollar. You respond to the auction upside and being treated as a serious seller. You never state a dollar amount."}
+];
+
+const DRILL_RUBRICS={
+ 'm1.3':{script:'Appointment Setter phone call',beats:[
+   {key:'two_numbers',label:'Framed the two-number offer (instant cash today versus auction value)'},
+   {key:'floor',label:'Named the reserve floor set at the cash price (cannot get less, only more)'},
+   {key:'no_quote',label:'Did NOT quote a specific dollar figure on items they could not see'},
+   {key:'guarantee',label:'Used a guarantee (beat any written offer, or tell you who pays more)'},
+   {key:'two_option_close',label:'Closed on two specific times, not an open-ended whenever-works'},
+   {key:'photo_ask',label:'Asked the caller to text photos to the direct line'}
+ ]}
+};
+
+const DRILL_QUOTA={'m1.3':{reps:5,score:80}};
+function drillQuota(id){return DRILL_QUOTA[id]||{reps:5,score:80};}
+
+/* Objection bank: each drills ONE objection to automaticity. rubric keys reuse module beats where natural. */
+const DRILL_OBJECTIONS={
+ 'm1.3':[
+  {id:'price',name:'Just give me a price on the phone',line:"Look, I just want a number. What do you pay per gram for gold?",
+   behavior:"You demand a phone price over and over and name other shops. You only let it go if the rep reframes to the two numbers and the floor without quoting a figure. If they cave and give a number, you push for more and stay unsold.",
+   model:"Fair, everyone asks. I will not guess on something I cannot see and risk selling you short. In person you get two numbers, cash today or auction value, with a floor at our cash price so you cannot lose. [time A] or [time B]?",
+   principle:"Reframe price to value and certainty. Never quote sight unseen.",
+   rubric:[{key:'no_quote',label:'Refused to quote a dollar figure on unseen items'},{key:'two_numbers',label:'Reframed to the two-number offer'},{key:'floor',label:'Named the floor you cannot lose on'}]},
+  {id:'spouse',name:'I need to talk to my spouse',line:"I cannot decide anything without talking to my husband first.",
+   behavior:"You keep deferring to your spouse. You book only if the rep includes the spouse and removes risk (free, no obligation) and offers a specific time.",
+   model:"Smart to include them. Bring them or get them on speaker, it is a free appraisal with no obligation, so it is an easy yes for both of you. [time A] or [time B]?",
+   principle:"Lower risk and include the decision maker, then close on a time.",
+   rubric:[{key:'no_obligation',label:'Removed risk (free, no obligation) and included the spouse'},{key:'two_option_close',label:'Closed on two specific times'}]},
+  {id:'online',name:'I looked it up online',line:"I checked online and my coins are worth about 3000 dollars. Can you beat that?",
+   behavior:"You treat online listings as fact and stay combative until the rep explains asking price versus sold price and the auction number, without quoting your items.",
+   model:"Good, that helps. Online shows asking prices, not what things actually sell for, which is exactly why our auction number matters, it is what real collectors pay. We will show both side by side in person. [time A] or [time B]?",
+   principle:"Separate asking price from sold price, pivot to the auction number.",
+   rubric:[{key:'asking_vs_sold',label:'Explained asking price versus real sold price'},{key:'no_quote',label:'Did not quote their specific items over the phone'},{key:'two_option_close',label:'Closed on two times'}]},
+  {id:'scam',name:'Is this a scam?',line:"Why will nobody just tell me a price? Is this some kind of scam or what?",
+   behavior:"You distrust the runaround and stay guarded until the rep is transparent: the two numbers, the floor, the guarantee, and an honest reason no number can be given sight unseen.",
+   model:"Totally fair to be careful. Here is the honest reason: a price on something I cannot see is a guess, and a guess either inflates your hopes or sells you short. In person you get two real numbers, a floor you cannot lose on, and we beat any written offer. [time A] or [time B]?",
+   principle:"Defuse distrust with transparency and an honest reason.",
+   rubric:[{key:'transparency',label:'Gave an honest reason and the transparent two-number plus floor offer'},{key:'guarantee',label:'Used a guarantee'}]},
+  {id:'lowball',name:'That is lower than I expected',line:"I was hoping for a lot more than that. That seems low.",
+   behavior:"You are disappointed and ready to walk. You stay only if the rep pivots to consignment and the floor (auction upside, cannot get less than cash).",
+   model:"I hear you. If cash today is not enough, this is exactly when consignment wins: we sell it at auction for full value, and we set the floor at our cash price, so you cannot get less, only more. Want me to walk you through that?",
+   principle:"Turn a low cash reaction into the consignment and floor pivot.",
+   rubric:[{key:'consignment_pivot',label:'Pivoted to consignment as the higher path'},{key:'floor',label:'Named the floor (cannot get less than cash)'}]},
+  {id:'think',name:'I want to think about it',line:"Let me think about it and maybe I will call back.",
+   behavior:"You stall. You book only if the rep makes acting easy and low-risk and gives a concrete next step and time, without being pushy.",
+   model:"Of course. The easy first step costs you nothing: text me a couple photos so we can get the real numbers ready, then you decide with everything in front of you. [time A] or [time B] to come see them?",
+   principle:"Shrink the next step and remove risk instead of pressuring.",
+   rubric:[{key:'easy_next_step',label:'Offered a small, no-risk next step'},{key:'two_option_close',label:'Closed on two times'},{key:'photo_ask',label:'Asked for photos'}]}
+ ]
+};
+function moduleObjections(id){return DRILL_OBJECTIONS[id]||null;}
 const FLASHCARDS=[
  ['Peace dollar','1921-P, 1928-P'],
  ['Morgan dollar','Any CC mint, 1893-S, 1895-P'],
@@ -280,7 +357,7 @@ function stats(p){const total=flatModules().length;let passed=0;CURRICULUM.forEa
 function getTrainees(){return load(STORE.trainees,{});}
 function saveTrainees(t){save(STORE.trainees,t);}
 function currentName(){return load(STORE.current,null);}
-function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
+function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
 function currentProgress(){const t=getTrainees();const n=currentName();return n&&t[n]?normalize(t[n]):null;}
 function persist(p){const t=getTrainees();t[p.name]=p;saveTrainees(t);}
 function newTrainee(n){return{name:n,created:Date.now(),lastActivity:Date.now(),modules:{},finals:{},signoff:{tier3a:false,tier3b:false},completedAt:null,log:[]};}
@@ -370,6 +447,166 @@ function renderDashboard(){
 }
 
 function findModule(id){for(const t of CURRICULUM){const m=t.modules.find(x=>x.id===id);if(m)return{tier:t,mod:m};}return null;}
+/* ---- AI drill engine ---- */
+let drillState=null;
+function drillAPI(mode,body){
+  const c=getDrillCfg();
+  return fetch(c.url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({passcode:c.pass,mode},body))})
+    .then(r=>{if(!r.ok)return r.text().then(t=>{throw new Error('Server '+r.status+(t?': '+t.slice(0,120):''));});return r.json();});
+}
+function voiceSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+function startDrill(id){
+  if(!moduleDrill(id))return;
+  if(!drillReady()){alert('The AI practice drill is not set up yet. An administrator can add the practice server in Administrator settings.');return;}
+  const rub=moduleDrill(id);
+  const persona=DRILL_PERSONAS[Math.floor(Math.random()*DRILL_PERSONAS.length)];
+  drillState={id,rub,persona,script:rub.script,focused:false,voice:false,busy:false,
+    msgs:[{who:'cust',text:persona.opening}]};
+  renderDrillChat();
+}
+function renderObjectionBank(id){
+  const objs=moduleObjections(id);if(!objs)return;
+  let cards=objs.map(o=>`<div class="standard" style="margin-top:0;margin-bottom:14px">
+    <b>${esc(o.name)}</b>
+    <div style="margin:8px 0;color:var(--cream-dim)">Customer: "${esc(o.line)}"</div>
+    <div class="dmodel"><b>Model response:</b> ${esc(o.model)}</div>
+    <div class="lesson-note" style="margin-top:6px">Principle: ${esc(o.principle)}</div>
+    <button class="btn btn-gold" style="margin-top:10px" onclick="startObjectionDrill('${id}','${o.id}')">Drill this one</button>
+  </div>`).join('');
+  app.innerHTML=`<div class="fade"><div class="admin-head"><div><div class="crumb">Objection mastery</div><h1>Objection Drills</h1></div>
+    <button class="btn btn-gold" onclick="openModule('${id}')">Back</button></div>
+    <div class="standard" style="margin-top:0">Study the model line, then drill the objection one at a time until it is automatic. The AI customer will keep hitting you with this one objection until you handle it cleanly.</div>
+    ${cards}</div>`;
+  window.scrollTo(0,0);
+}
+function startObjectionDrill(id,objId){
+  if(!drillReady()){alert('The AI practice drill is not set up yet. Ask an administrator to connect the practice server.');return;}
+  const o=(moduleObjections(id)||[]).find(x=>x.id===objId);if(!o)return;
+  const persona={name:o.name,opening:o.line,behavior:o.behavior};
+  drillState={id,objId,rub:{script:'Objection: '+o.name,beats:o.rubric},persona,script:'Objection: '+o.name,focused:true,voice:false,busy:false,
+    msgs:[{who:'cust',text:o.line}]};
+  renderDrillChat();
+}
+function startBeatDrill(id,beatKey){
+  if(!drillReady())return;
+  const rub=moduleDrill(id);if(!rub)return;
+  const beat=rub.beats.find(b=>b.key===beatKey);if(!beat)return;
+  const persona=DRILL_PERSONAS[Math.floor(Math.random()*DRILL_PERSONAS.length)];
+  drillState={id,rub:{script:'Focus drill: '+beat.label,beats:[beat]},persona,script:'Focus drill',focused:true,voice:false,busy:false,
+    msgs:[{who:'cust',text:persona.opening}]};
+  renderDrillChat();
+}
+function drillBubble(m){
+  const me=m.who==='rep';
+  return `<div class="dbubble ${me?'drep':'dcust'}"><div class="dwho">${me?'You':'Customer'}</div><div>${esc(m.text)}</div></div>`;
+}
+function renderDrillChat(){
+  const s=drillState;const {mod}=findModule(s.id);
+  const vbtn=voiceSupported()?`<button class="btn btn-ghost" id="vtoggle" onclick="drillToggleVoice()">Voice: ${s.voice?'On':'Off'}</button>`:'';
+  const mic=(voiceSupported()&&s.voice)?`<button class="btn btn-ghost" id="micbtn" onclick="drillMic()">Hold to talk</button>`:'';
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(s.script)}</div><h1>Practice Call</h1></div>
+      <button class="btn btn-gold" onclick="drillExit()">Exit</button></div>
+    <div class="standard" style="margin-top:0">A live customer is on the line. Run the phone framework. When you are done, end the call to get scored on the exact checklist your real calls are graded on. ${vbtn}</div>
+    <div id="dscroll" class="dchat">${s.msgs.map(drillBubble).join('')}${s.busy?'<div class="dbubble dcust"><div class="dwho">Customer</div><div class="dtyping">...</div></div>':''}</div>
+    <div class="dinrow">
+      <input id="dinput" class="dinput" placeholder="Type what you would say, then Send" onkeydown="if(event.key==='Enter')drillSend()">
+      ${mic}
+      <button class="btn btn-gold" id="dsend" onclick="drillSend()" ${s.busy?'disabled':''}>Send</button>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-ghost" onclick="drillEnd()">End call and score me</button></div>
+    <div id="derr" class="lesson-note" style="color:#e0a06a"></div>
+  </div>`;
+  const sc=document.getElementById('dscroll');if(sc)sc.scrollTop=sc.scrollHeight;
+  const di=document.getElementById('dinput');if(di&&!s.busy)di.focus();
+}
+function drillToggleVoice(){drillState.voice=!drillState.voice;renderDrillChat();}
+function drillSpeak(t){try{if(drillState&&drillState.voice&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(t);u.rate=1.02;window.speechSynthesis.speak(u);}}catch(e){}}
+function drillMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+  const rec=new SR();rec.lang='en-US';rec.interimResults=false;rec.maxAlternatives=1;
+  const b=document.getElementById('micbtn');if(b)b.textContent='Listening...';
+  rec.onresult=e=>{const t=e.results[0][0].transcript;const di=document.getElementById('dinput');if(di)di.value=t;drillSend();};
+  rec.onerror=()=>{if(b)b.textContent='Hold to talk';};
+  rec.onend=()=>{if(b)b.textContent='Hold to talk';};
+  rec.start();
+}
+function drillSend(){
+  const s=drillState;if(!s||s.busy)return;
+  const di=document.getElementById('dinput');const text=(di?di.value:'').trim();if(!text)return;
+  s.msgs.push({who:'rep',text});s.busy=true;renderDrillChat();
+  const api=s.msgs.slice(1).map(m=>({role:m.who==='rep'?'user':'assistant',content:m.text}));
+  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,messages:api})
+    .then(r=>{const reply=(r&&r.reply)?r.reply:'(no response)';s.msgs.push({who:'cust',text:reply});s.busy=false;renderDrillChat();drillSpeak(reply);})
+    .catch(err=>{s.busy=false;renderDrillChat();const ee=document.getElementById('derr');if(ee)ee.textContent='Could not reach the practice server. '+err.message;});
+}
+function drillTranscript(s){return s.msgs.map(m=>(m.who==='rep'?'Rep: ':'Customer: ')+m.text).join('\n');}
+function drillEnd(){
+  const s=drillState;if(!s)return;
+  const repTurns=s.msgs.filter(m=>m.who==='rep').length;
+  if(repTurns===0){const ee=document.getElementById('derr');if(ee)ee.textContent='Say at least one thing before ending the call.';return;}
+  app.innerHTML=`<div class="fade"><h1>Scoring your call...</h1><div class="standard">Grading against the ${esc(s.script)} checklist.</div></div>`;
+  drillAPI('score',{script:s.script,rubric:s.rub.beats,transcript:drillTranscript(s)})
+    .then(r=>{logDrill(s.id,r,s.focused);renderDrillScore(r);})
+    .catch(err=>{app.innerHTML=`<div class="fade"><h1>Scoring failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderDrillChat()">Back to the call</button></div>`;});
+}
+function logDrill(id,r,focused){
+  const p=currentProgress();if(!p)return;
+  p.drills=p.drills||{};const sc=Math.max(0,Math.min(100,Number(r.score)||0));
+  const d=p.drills[id]||{best:0,attempts:0,focusedAttempts:0,last:0,beatStats:{}};
+  d.beatStats=d.beatStats||{};
+  (Array.isArray(r.beats)?r.beats:[]).forEach(b=>{
+    if(!b||!b.key)return;const bs=d.beatStats[b.key]||{hit:0,total:0};bs.total++;if(b.hit)bs.hit++;d.beatStats[b.key]=bs;
+  });
+  if(focused){d.focusedAttempts=(d.focusedAttempts||0)+1;}
+  else{d.attempts=(d.attempts||0)+1;d.best=Math.max(d.best||0,sc);d.last=sc;d.lastAt=Date.now();}
+  p.drills[id]=d;
+  p.log=p.log||[];p.log.push({type:'drill',id,score:sc,focused:!!focused,ts:Date.now()});
+  p.lastActivity=Date.now();persist(p);
+}
+function weakestBeat(p,id){
+  const rub=moduleDrill(id);if(!rub||!p.drills||!p.drills[id]||!p.drills[id].beatStats)return null;
+  const stats=p.drills[id].beatStats;let worst=null;
+  rub.beats.forEach(b=>{const s=stats[b.key];if(s&&s.total>=2){const ratio=s.hit/s.total;if(!worst||ratio<worst.ratio)worst={key:b.key,label:b.label,ratio};}});
+  return (worst&&worst.ratio<1)?worst:null;
+}
+function quotaMet(p,id){const q=drillQuota(id);const d=(p.drills&&p.drills[id])?p.drills[id]:null;return !!(d&&d.attempts>=q.reps&&d.best>=q.score);}
+function quotaLine(p,id){const q=drillQuota(id);const d=(p.drills&&p.drills[id])?p.drills[id]:{attempts:0,best:0};
+  const met=quotaMet(p,id);
+  return `${met?'<span class="pill pill-g">quota met</span>':'<span class="pill pill-l">quota not met</span>'} ${d.attempts||0} of ${q.reps} full reps, best ${d.best||0} (target ${q.score})`;}
+function renderDrillScore(r){
+  const s=drillState;const sc=Math.max(0,Math.min(100,Number(r.score)||0));
+  const beats=Array.isArray(r.beats)?r.beats:[];
+  const model=Array.isArray(r.model)?r.model:[];
+  const modelFor=k=>{const m=model.find(x=>x.key===k);return m?m.line:'';};
+  let rows=s.rub.beats.map(b=>{
+    const got=beats.find(x=>x.key===b.key)||{};const hit=!!got.hit;
+    const ev=got.evidence?`<div class="lesson-note">${esc(got.evidence)}</div>`:'';
+    const fix=(!hit&&modelFor(b.key))?`<div class="dmodel"><b>What great sounds like:</b> ${esc(modelFor(b.key))}</div>`:'';
+    return `<tr><td style="width:34px">${hit?'<span class="pill pill-g">hit</span>':'<span class="pill pill-l">miss</span>'}</td><td>${esc(b.label)}${ev}${fix}</td></tr>`;
+  }).join('');
+  const ring=sc>=85?'#7fd3a5':(sc>=70?'#d9b84a':'#e0a06a');
+  const p=currentProgress();
+  const weak=(p&&!s.focused)?weakestBeat(p,s.id):null;
+  const weakBlock=weak?`<div class="dmodel" style="margin-top:14px"><b>Your weakest skill so far:</b> ${esc(weak.label)}. <button class="btn btn-ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="startBeatDrill('${s.id}','${weak.key}')">Drill just this</button></div>`:'';
+  const rerun=s.focused
+    ? (s.objId?`<button class="btn btn-gold" onclick="startObjectionDrill('${s.id}','${s.objId}')">Run this objection again</button>`
+              :`<button class="btn btn-gold" onclick="startBeatDrill('${s.id}','${(s.rub.beats[0]||{}).key}')">Run again</button>`)
+    : `<button class="btn btn-gold" onclick="startDrill('${s.id}')">Run another (new customer)</button>`;
+  app.innerHTML=`<div class="fade"><div class="admin-head"><h1>${s.focused?'Drill Scored':'Call Scored'}</h1>
+    <button class="btn btn-gold" onclick="drillExit()">Back to module</button></div>
+    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${esc(s.script)}</div><div class="lesson-note">${s.focused?'Focused drill':'Customer type this round: '+esc(s.persona.name)}</div></div></div>
+    ${r.coaching?`<div class="standard"><b>Coach's note:</b> ${esc(r.coaching)}</div>`:''}
+    <div class="table-wrap"><table>${rows}</table></div>
+    ${weakBlock}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      ${rerun}
+      <button class="btn btn-ghost" onclick="drillExit()">Done</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function drillExit(){const id=drillState?drillState.id:null;drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
+
 function openModule(id){
   const p=currentProgress();const status=computeStatus(p);if(status[id]==='locked')return;
   const {tier,mod}=findModule(id);
@@ -377,16 +614,27 @@ function openModule(id){
   const cleared=(st==='certified'||st==='awaiting');
   const isCoin=(id==='m2.1');
   const note=st==='awaiting'?`<div class="standard" style="margin-top:0"><b>Awaiting manager sign-off</b><br>You passed the written test for this module. It now needs a short one-on-one with a manager, who will sign it off by name. The next module unlocks once that sign-off is recorded.</div>`:'';
+  let practicePanel='';
+  if(moduleDrill(id)){
+    const weak=weakestBeat(p,id);
+    const q=drillQuota(id);
+    practicePanel=`<div class="standard"><b>AI practice</b><br>
+      Hit the practice bar before sign-off: ${q.reps} full calls scoring ${q.score} or higher. ${quotaLine(p,id)}.
+      ${weak?`<div class="dmodel" style="margin-top:10px"><b>Your weakest skill:</b> ${esc(weak.label)}. <button class="btn btn-ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="startBeatDrill('${id}','${weak.key}')">Drill just this</button></div>`:''}</div>`;
+  }
   app.innerHTML=`<div class="lesson fade">
     <div class="crumb">${tier.name}</div>
     <h1>${mod.name}</h1>
     <div class="sub">Read the briefing, then take the test. You need ${mod.passMark}% to clear the gate, then a manager sign-off to advance.</div>
     ${note}
     <div class="lesson-card">${mod.lessonHTML}</div>
+    ${practicePanel}
     <div class="lesson-actions">
       <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         ${isCoin?`<button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>`:''}
+        ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
+        ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
         ${cleared?`<button class="btn btn-ghost" onclick="startTest('${id}',true)">Practice (not recorded)</button>`:''}
         <button class="btn btn-gold" onclick="startTest('${id}')">Take the Test</button>
       </div></div></div>`;
@@ -647,6 +895,14 @@ function renderAdmin(){
     </div>
     <div class="table-wrap"><table><tr><th>Trainee</th><th>Modules</th><th>Current Step</th><th>Attempts</th><th>Last Score</th><th></th></tr>${rows}</table></div>
     <div class="config-row"><button class="btn btn-ghost" onclick="exportAll()">Export all data (JSON)</button><button class="btn btn-ghost" onclick="wipeAll()">Wipe all data</button></div>
+    <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 8px;color:var(--gold-bright)">AI Practice Drill</h2>
+    <div class="standard" style="margin-top:0">Connect your practice server so trainees can run live roleplay calls graded on the script checklist. The server holds your AI key, so it never touches this app. Status: ${drillReady()?'<span class="pill pill-g">connected</span>':'<span class="pill pill-l">not set up</span>'}</div>
+    <div class="config-row" style="flex-direction:column;align-items:stretch;gap:8px;max-width:560px">
+      <input id="durl" class="dinput" placeholder="Practice server URL (your Vercel function)" value="${esc(getDrillCfg().url||'')}">
+      <input id="dpass" class="dinput" placeholder="Practice server passcode" value="${esc(getDrillCfg().pass||'')}">
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveDrillCfg()">Save practice server</button><button class="btn btn-ghost" onclick="testDrill()">Test connection</button></div>
+      <div id="dtest" class="lesson-note"></div>
+    </div>
     <p style="color:var(--cream-dim);font-size:13px;margin-top:14px">Each module is certified by a manager one-on-one after the trainee passes its written test, and the next module unlocks only after that sign-off. Managers can sign off in Manager access (separate passcode); you can also sign off from a trainee's Details. Resets and data wipe are owner-only.</p></div>`;
   window.scrollTo(0,0);
 }
@@ -684,6 +940,8 @@ function adminSignOff(n,id){const t=getTrainees();const p=normalize(t[n]);if(!is
 function resetTrainee(n){if(!confirm('Reset all progress for '+n+'?'))return;const t=getTrainees();if(t[n]){t[n]=newTrainee(n);saveTrainees(t);}renderAdmin();}
 function changeAdminPass(){const np=prompt('New administrator passcode:');if(np&&np.length>=4){save(STORE.admin,np);alert('Admin passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
 function changeMgrPass(){const np=prompt('New manager passcode:');if(np&&np.length>=4){save(MGR_STORE,np);alert('Manager passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
+function saveDrillCfg(){const url=(document.getElementById('durl').value||'').trim();const pass=(document.getElementById('dpass').value||'').trim();setDrillCfg({url,pass});renderAdmin();}
+function testDrill(){const out=document.getElementById('dtest');if(out)out.textContent='Testing...';drillAPI('chat',{persona:DRILL_PERSONAS[0],opening:DRILL_PERSONAS[0].opening,script:'Connection test',messages:[{role:'user',content:'Hello, this is a connection test.'}]}).then(r=>{if(out)out.textContent=(r&&r.reply)?'Connected. The server replied.':'Reached the server but got an unexpected response.';}).catch(err=>{if(out)out.textContent='Failed: '+err.message;});}
 function csvFor(p){
   let rows=[['Type','Name','Status','Best Score','Attempts','Last Attempt','Certified By','Certified At']];
   CURRICULUM.forEach(t=>{t.modules.forEach(m=>{const rec=p.modules[m.id];
@@ -733,8 +991,11 @@ function renderMgrTrainee(n){
   const status=computeStatus(p);const esn=esc(n).replace(/'/g,"\\'");
   let awaitingCards='';
   flatModules().forEach(x=>{if(status[x.mod.id]==='awaiting'){const m=x.mod;
+    const dr=(p.drills&&p.drills[m.id])?p.drills[m.id]:null;
+    const drLine=moduleDrill(m.id)?`<div style="margin:0 0 10px"><b style="color:var(--cream)">AI practice:</b> ${quotaLine(p,m.id)}${dr?'':' <span style="color:#e0a06a">not practiced yet</span>'}</div>`:'';
     awaitingCards+=`<div class="standard" style="margin-top:0;margin-bottom:14px"><b>${esc(m.name)}</b> <span class="pill pill-a">awaiting sign-off</span>
       <div style="margin:10px 0 12px;color:var(--cream-dim);font-size:14px"><b style="color:var(--cream)">One-on-one check:</b> ${esc(m.comp||'Confirm the trainee can perform this module to standard.')}</div>
+      ${drLine}
       <button class="btn btn-gold" onclick="mgrSignOff('${esn}','${m.id}')">Sign off ${esc(m.name)}</button></div>`;}});
   if(!awaitingCards)awaitingCards=`<p style="color:var(--cream-dim)">No modules are waiting for your sign-off right now. A module appears here once the trainee passes its written test.</p>`;
   let statusRows='';
@@ -753,6 +1014,7 @@ function renderMgrTrainee(n){
 function mgrSignOff(n,id){
   const trainees=getTrainees();const p=normalize(trainees[n]);
   if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}
+  if(moduleDrill(id)&&!quotaMet(p,id)){const q=drillQuota(id);if(!confirm('This trainee has not hit the practice bar of '+q.reps+' calls scoring '+q.score+' or higher. Sign off anyway?'))return;}
   const code=prompt('Manager passcode to certify this module:');if(code===null)return;
   if(code!==getMgrPass()){alert('Incorrect manager passcode.');return;}
   const by=prompt('Your name (recorded with this sign-off):');if(by===null)return;
