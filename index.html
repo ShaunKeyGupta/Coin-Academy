@@ -374,7 +374,7 @@ function renderTopbar(){
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>`:'';
 }
 function logout(){save(STORE.current,null);renderLogin();renderTopbar();}
-function goDash(){renderDashboard();renderTopbar();}
+function goDash(){if(previewMode){renderPreviewLadder();return;}renderDashboard();renderTopbar();}
 
 function renderLogin(){
   app.innerHTML=`<div class="login-hero">
@@ -570,6 +570,7 @@ function drillEnd(){
     .catch(err=>{app.innerHTML=`<div class="fade"><h1>Scoring failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderDrillChat()">Back to the call</button></div>`;});
 }
 function logDrill(id,r,focused){
+  if(previewMode)return;
   const p=currentProgress();if(!p)return;
   p.drills=p.drills||{};const sc=Math.max(0,Math.min(100,Number(r.score)||0));
   const d=p.drills[id]||{best:0,attempts:0,focusedAttempts:0,last:0,beatStats:{}};
@@ -625,7 +626,41 @@ function renderDrillScore(r){
 }
 function drillExit(){const id=drillState?drillState.id:null;if(drillState&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
 
+let previewMode=false,previewFrom='admin';
+function startPreview(from){previewMode=true;previewFrom=from||'admin';renderPreviewLadder();}
+function exitPreview(){previewMode=false;if(previewFrom==='manager')renderManager();else renderAdmin();}
+function renderPreviewLadder(){
+  let html=`<div class="fade"><div class="admin-head"><div><div class="crumb">Admin and manager preview</div><h1>All Modules</h1></div>
+    <button class="btn btn-gold" onclick="exitPreview()">Exit preview</button></div>
+    <div class="standard" style="margin-top:0">Open and test any module without the ladder gating. Read it, take its test, or run its AI drill. Nothing here is recorded against a trainee.</div>`;
+  CURRICULUM.forEach(t=>{
+    html+=`<div class="tier" style="margin-top:18px"><div class="tier-head"><div class="tier-num">${t.n}</div><div><div class="tier-title">${esc(t.name)}</div><div class="tier-sub">${esc(t.sub||'')}</div></div></div><div class="modules">`;
+    t.modules.forEach((m,idx)=>{const shown=Math.min(m.test.length,SHOW_CAP);
+      html+=`<div class="mod available" onclick="openModule('${m.id}')"><div class="mod-dot">${idx+1}</div>
+        <div class="mod-body"><div class="mod-name">${esc(m.name)}</div><div class="mod-meta">Pass mark ${m.passMark}%, ${shown} questions${moduleDrill(m.id)?', AI drill':''}</div></div>
+        <span class="mod-status st-available">Open</span></div>`;});
+    html+=`</div></div>`;});
+  html+=`</div>`;app.innerHTML=html;window.scrollTo(0,0);
+}
+function openModulePreview(id){
+  const {tier,mod}=findModule(id);const isCoin=(id==='m2.1');
+  app.innerHTML=`<div class="lesson fade">
+    <div class="crumb">${esc(tier.name)} (preview)</div>
+    <h1>${esc(mod.name)}</h1>
+    <div class="sub">Preview mode. Read the briefing and test the module. Nothing here is recorded.</div>
+    <div class="lesson-card">${mod.lessonHTML}</div>
+    <div class="lesson-actions">
+      <button class="btn btn-ghost" onclick="renderPreviewLadder()">Back to modules</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        ${isCoin?`<button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>`:''}
+        ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
+        ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
+        <button class="btn btn-gold" onclick="startTest('${id}',true)">Take the Test</button>
+      </div></div></div>`;
+  window.scrollTo(0,0);
+}
 function openModule(id){
+  if(previewMode)return openModulePreview(id);
   const p=currentProgress();const status=computeStatus(p);if(status[id]==='locked')return;
   const {tier,mod}=findModule(id);
   const st=status[id];
@@ -899,7 +934,7 @@ function renderAdmin(){
       <td><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="renderDetail('${esc(n).replace(/'/g,"\\'")}')">Details</button></td></tr>`;});
   if(!rows)rows=`<tr><td colspan="6" style="text-align:center;color:var(--cream-dim)">No trainees yet.</td></tr>`;
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>Administrator Console</h1>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="changeAdminPass()">Admin passcode</button><button class="btn btn-ghost" onclick="changeMgrPass()">Manager passcode</button><button class="btn btn-ghost" onclick="goDash()">Exit</button></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="startPreview('admin')">Preview and test modules</button><button class="btn btn-ghost" onclick="changeAdminPass()">Admin passcode</button><button class="btn btn-ghost" onclick="changeMgrPass()">Manager passcode</button><button class="btn btn-ghost" onclick="goDash()">Exit</button></div></div>
     <div class="stat-row">
       <div class="stat"><div class="n">${c.total}</div><div class="l">Trainees</div></div>
       <div class="stat"><div class="n">${c.full}</div><div class="l">Full Program Certified</div></div>
@@ -993,7 +1028,7 @@ function renderManager(){
       <td><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="renderMgrTrainee('${esc(n).replace(/'/g,"\\'")}')">Open</button></td></tr>`;});
   if(!rows)rows=`<tr><td colspan="5" style="text-align:center;color:var(--cream-dim)">No trainees yet.</td></tr>`;
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>Manager View</h1>
-    <button class="btn btn-gold" onclick="goDash()">Exit</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="startPreview('manager')">Preview and test modules</button><button class="btn btn-gold" onclick="goDash()">Exit</button></div></div>
     <div class="stat-row">
       <div class="stat"><div class="n">${c.total}</div><div class="l">Trainees</div></div>
       <div class="stat"><div class="n">${c.t1}</div><div class="l">Tier 1 Complete</div></div>
