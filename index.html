@@ -154,6 +154,7 @@ tr:hover td{background:rgba(201,162,39,.04)}
 .dtyping{letter-spacing:3px;color:var(--cream-dim)}
 .dinrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .dinput{flex:1;min-width:200px;background:var(--navy-soft,rgba(255,255,255,.04));border:1px solid var(--line);color:var(--cream);padding:12px 14px;border-radius:10px;font-size:15px;font-family:inherit}
+textarea.dinput{min-height:54px;resize:vertical;line-height:1.4}
 .dinput:focus{outline:none;border-color:var(--gold)}
 .dscorehead{display:flex;align-items:center;gap:18px;margin:6px 0 16px}
 .dscorenum{font-family:'Fraunces';font-size:54px;font-weight:700;line-height:1}
@@ -504,14 +505,14 @@ function drillBubble(m){
 function renderDrillChat(){
   const s=drillState;const {mod}=findModule(s.id);
   const vbtn=voiceSupported()?`<button class="btn btn-ghost" id="vtoggle" onclick="drillToggleVoice()">Voice: ${s.voice?'On':'Off'}</button>`:'';
-  const mic=(voiceSupported()&&s.voice)?`<button class="btn btn-ghost" id="micbtn" onclick="drillMic()">Hold to talk</button>`:'';
+  const mic=(voiceSupported()&&s.voice)?`<button class="btn btn-ghost" id="micbtn" onclick="drillMic()">${s.listening?'Listening, tap to stop':'Tap to talk'}</button>`:'';
   app.innerHTML=`<div class="fade">
     <div class="admin-head"><div><div class="crumb">${esc(s.script)}</div><h1>Practice Call</h1></div>
       <button class="btn btn-gold" onclick="drillExit()">Exit</button></div>
     <div class="standard" style="margin-top:0">A live customer is on the line. Run the phone framework. When you are done, end the call to get scored on the exact checklist your real calls are graded on. ${vbtn}</div>
     <div id="dscroll" class="dchat">${s.msgs.map(drillBubble).join('')}${s.busy?'<div class="dbubble dcust"><div class="dwho">Customer</div><div class="dtyping">...</div></div>':''}</div>
     <div class="dinrow">
-      <input id="dinput" class="dinput" placeholder="Type what you would say, then Send" onkeydown="if(event.key==='Enter')drillSend()">
+      <textarea id="dinput" class="dinput" rows="2" placeholder="Type or tap to talk your full response, then Send. Shift+Enter for a new line." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();drillSend();}"></textarea>
       ${mic}
       <button class="btn btn-gold" id="dsend" onclick="drillSend()" ${s.busy?'disabled':''}>Send</button>
     </div>
@@ -521,23 +522,40 @@ function renderDrillChat(){
   const sc=document.getElementById('dscroll');if(sc)sc.scrollTop=sc.scrollHeight;
   const di=document.getElementById('dinput');if(di&&!s.busy)di.focus();
 }
-function drillToggleVoice(){drillState.voice=!drillState.voice;renderDrillChat();}
+function drillToggleVoice(){drillState.voice=!drillState.voice;if(!drillState.voice&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}renderDrillChat();}
 function drillSpeak(t){try{if(drillState&&drillState.voice&&window.speechSynthesis){const u=new SpeechSynthesisUtterance(t);u.rate=1.02;window.speechSynthesis.speak(u);}}catch(e){}}
+let drillRec=null;
+function drillStartRec(){
+  const s=drillState;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!s)return;
+  const rec=new SR();rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  drillRec=rec;
+  rec.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)s.dictFinal+=r[0].transcript+' ';else interim+=r[0].transcript;}
+    const di=document.getElementById('dinput');if(di)di.value=(s.dictBase+s.dictFinal+interim).replace(/\s+/g,' ').replace(/^\s+/,'');
+  };
+  rec.onend=()=>{if(s.listening){try{drillStartRec();}catch(e){}}};
+  rec.onerror=()=>{};
+  try{rec.start();}catch(e){}
+}
 function drillMic(){
+  const s=drillState;if(!s)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
-  const rec=new SR();rec.lang='en-US';rec.interimResults=false;rec.maxAlternatives=1;
-  const b=document.getElementById('micbtn');if(b)b.textContent='Listening...';
-  rec.onresult=e=>{const t=e.results[0][0].transcript;const di=document.getElementById('dinput');if(di)di.value=t;drillSend();};
-  rec.onerror=()=>{if(b)b.textContent='Hold to talk';};
-  rec.onend=()=>{if(b)b.textContent='Hold to talk';};
-  rec.start();
+  const b=document.getElementById('micbtn');
+  if(s.listening){s.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;if(b)b.textContent='Tap to talk';return;}
+  const di=document.getElementById('dinput');
+  s.dictBase=(di&&di.value)?di.value.replace(/\s+$/,'')+' ':'';
+  s.dictFinal='';s.listening=true;
+  if(b)b.textContent='Listening, tap to stop';
+  drillStartRec();
 }
 function drillSend(){
   const s=drillState;if(!s||s.busy)return;
+  if(s.listening){s.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}
   const di=document.getElementById('dinput');const text=(di?di.value:'').trim();if(!text)return;
   s.msgs.push({who:'rep',text});s.busy=true;renderDrillChat();
   const api=s.msgs.slice(1).map(m=>({role:m.who==='rep'?'user':'assistant',content:m.text}));
-  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,messages:api})
+  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,messages:api,maxTokens:500})
     .then(r=>{const reply=(r&&r.reply)?r.reply:'(no response)';s.msgs.push({who:'cust',text:reply});s.busy=false;renderDrillChat();drillSpeak(reply);})
     .catch(err=>{s.busy=false;renderDrillChat();const ee=document.getElementById('derr');if(ee)ee.textContent='Could not reach the practice server. '+err.message;});
 }
@@ -605,7 +623,7 @@ function renderDrillScore(r){
       <button class="btn btn-ghost" onclick="drillExit()">Done</button></div></div>`;
   window.scrollTo(0,0);
 }
-function drillExit(){const id=drillState?drillState.id:null;drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
+function drillExit(){const id=drillState?drillState.id:null;if(drillState&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
 
 function openModule(id){
   const p=currentProgress();const status=computeStatus(p);if(status[id]==='locked')return;
