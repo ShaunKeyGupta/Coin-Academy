@@ -576,7 +576,8 @@ function logDrill(id,r,focused){
   const d=p.drills[id]||{best:0,attempts:0,focusedAttempts:0,last:0,beatStats:{}};
   d.beatStats=d.beatStats||{};
   (Array.isArray(r.beats)?r.beats:[]).forEach(b=>{
-    if(!b||!b.key)return;const bs=d.beatStats[b.key]||{hit:0,total:0};bs.total++;if(b.hit)bs.hit++;d.beatStats[b.key]=bs;
+    if(!b||!b.key)return;const bs=d.beatStats[b.key]||{hit:0,total:0};bs.total++;
+    const v=(b.status==='hit')?1:(b.status==='partial')?0.5:(b.hit?1:0);bs.hit+=v;d.beatStats[b.key]=bs;
   });
   if(focused){d.focusedAttempts=(d.focusedAttempts||0)+1;}
   else{d.attempts=(d.attempts||0)+1;d.best=Math.max(d.best||0,sc);d.last=sc;d.lastAt=Date.now();}
@@ -600,10 +601,12 @@ function renderDrillScore(r){
   const model=Array.isArray(r.model)?r.model:[];
   const modelFor=k=>{const m=model.find(x=>x.key===k);return m?m.line:'';};
   let rows=s.rub.beats.map(b=>{
-    const got=beats.find(x=>x.key===b.key)||{};const hit=!!got.hit;
+    const got=beats.find(x=>x.key===b.key)||{};
+    const status=got.status||(got.hit?'hit':'miss');
     const ev=got.evidence?`<div class="lesson-note">${esc(got.evidence)}</div>`:'';
-    const fix=(!hit&&modelFor(b.key))?`<div class="dmodel"><b>What great sounds like:</b> ${esc(modelFor(b.key))}</div>`:'';
-    return `<tr><td style="width:34px">${hit?'<span class="pill pill-g">hit</span>':'<span class="pill pill-l">miss</span>'}</td><td>${esc(b.label)}${ev}${fix}</td></tr>`;
+    const fix=(status!=='hit'&&modelFor(b.key))?`<div class="dmodel"><b>What great sounds like:</b> ${esc(modelFor(b.key))}</div>`:'';
+    const pill=status==='hit'?'<span class="pill pill-g">hit</span>':(status==='partial'?'<span class="pill pill-a">partial</span>':'<span class="pill pill-l">miss</span>');
+    return `<tr><td style="width:42px">${pill}</td><td>${esc(b.label)}${ev}${fix}</td></tr>`;
   }).join('');
   const ring=sc>=85?'#7fd3a5':(sc>=70?'#d9b84a':'#e0a06a');
   const p=currentProgress();
