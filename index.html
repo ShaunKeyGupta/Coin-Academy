@@ -239,6 +239,30 @@ const DRILL_PERSONAS=[
  {name:'Junk Caller',opening:"I have a whole jewelry box of stuff, necklaces and rings, lots of it. Can you tell me what it is worth?",behavior:"Your items are costume and plated jewelry and common coins, worth very little, well under 500 dollars, but you think they might be valuable. The RIGHT outcome here is NOT an in-person appointment. You respond well when the rep asks for photos, gently tells you what the items actually are, and offers a free education packet on what to look for. You are happy to leave a positive review only if the rep was genuinely helpful and you feel good about it. You should NOT be booked for a visit, and if the rep pushes hard to schedule you in person, that is the wrong move and you can sense the time-waste. You are satisfied by the help and the packet, not by a sale."}
 ];
 
+/* In-person table sellers for the closer drill (m2.4). Each carries hidden grading notes the rep never sees. */
+const CLOSER_PERSONAS=[
+ {name:'Multi-Offer Shopper',opening:"I have already been to a couple other places today, so I know roughly what this is worth. What can you do for me?",
+  behavior:"You have gold jewelry and a few collectible coins. You took them out recently and name that other shops looked at them. You push hard: ask what they pay per gram, per ounce, per lot, ask to see their internal sheet, say another shop offered more, ask if they can do a little better. Short drive, heard about them online. You are knowledgeable enough to spot a lowball and you walk if the opening offer is insulting. You only commit when the rep builds trust, justifies value, and lands a fair number, or pivots the high pieces to consignment.",
+  grading:"Items roughly 3000 to 4000 dollars, mostly gold scrap (90 percent cap off spot) plus a few raw collectible coins (80 percent cap off eBay sold). Signals: knowledgeable, recently shopped, short drive, online, so a SHARP seller. Opening at the 30 percent floor loses the deal and must be docked; the opener should be higher, around 55 to 65 percent. Ideal landing band is roughly 70 to 80 percent given the competition, never over the caps. Dock: exceeding caps or releasing the internal sheet. Best path: cash the gold near band, pivot the collectible coins to Jason on consignment."},
+ {name:'Inherited Collection',opening:"These were my father's. I honestly have no idea what any of it is worth, I just know he cared about them.",
+  behavior:"You inherited a box of coins and some jewelry. You are unsure and a little sentimental. Answers: you do not need money urgently, you are not a collector, your kids are not interested, you have not had them looked at recently, you drove a fair distance. Not knowledgeable. You respond to trust, patience, and being told honestly what things are. You may say you want to pass it down, or that you will think about it. You can be moved to a cash sale or consignment if treated with care.",
+  grading:"Items roughly 2000 to 6000 dollars, mixed metals and raw coins. Signals: low knowledge, low urgency, some sentiment, fair drive, not a collector, so a SOFT, unaware seller. Opening can be lower, around 35 to 45 percent, and still close. Ideal landing band 45 to 60 percent. The main leak to DOCK is OVERPAYING (paying near the caps when signals say they would take far less). Also dock failing to handle pass-it-down, or being pushy and losing trust. Best path: clean cash buy well under cap, or consignment on the better coins."},
+ {name:'Walk-In With Junk',opening:"I have got a whole bag of jewelry and old coins here, figured I would see what it is worth.",
+  behavior:"Most items are plated, costume, or common low-value coins, maybe one small real piece. You think it might be worth a lot. You answer questions and are not knowledgeable. The right outcome is honesty: the rep triages, kindly tells you what is real and what is not, makes a small fair offer on anything real, and does not waste a full closing pitch on junk. You are satisfied by honesty and good treatment.",
+  grading:"Items mostly junk, real value under 200 dollars. Correct move is fast, honest triage and a small fair offer or a polite no, NOT the full Show Sales close and NOT overpaying. Dock: running the full high-pressure close on junk, overpaying for costume or plated as if real, or being dismissive. Best path: quick honest read, small fair cash on anything real, keep goodwill."},
+ {name:'Whale',opening:"I have a substantial collection, this is just a sample. If we work well together there is a lot more where this came from.",
+  behavior:"High-value items, easily over 100k across the full collection. You are knowledgeable, value your time, and want to be treated as a serious seller. You probe whether they can handle volume and get top dollar. Not desperate. You respond to authority, the auction upside, and being introduced to the right person. You expect near retail and push back on a pure cash lowball.",
+  grading:"Sample is high value, full collection over 100k, so the consignment fee is WAIVED over 100k. Signals: knowledgeable, high value, low urgency, serious, so a CONSIGNMENT-FIRST deal. The win is NOT a cash lowball, it is hyping auction upside, mentioning the 10 percent and that it is waived over 100k, and a warm transfer to Jason. Dock: trying to cash-buy the whole thing cheap, missing the consignment pivot, or failing the warm transfer. Best path: cash the bullion fairly, consign the collectibles, transfer to Jason."},
+ {name:'Emotional Seller',opening:"I really do not want to sell these, but I think I have to. It has been a hard year.",
+  behavior:"You are attached and a little distressed. You may need the money (some urgency) but it hurts to let go. You answer questions but get emotional about where the items came from. You respond to empathy and patience, not pressure. Pushing too hard makes you shut down and want to keep them or pass them down. Handled with care, you will sell.",
+  grading:"Items moderate value. Signals: high attachment, some urgency, low knowledge. The skill tested is trust and empathy under emotion, plus not overpaying out of sympathy. Ideal landing band mid range. Dock: high-pressure tactics that break trust, overpaying because of the emotion, or fumbling the pass-it-down stall. Best path: empathetic close at a fair under-cap number, or a gentle consignment option."},
+ {name:'Dealer',opening:"I am in the business myself, so let us not waste each other's time. Give me your best wholesale on these.",
+  behavior:"You are a knowledgeable dealer who knows melt, spot, and grades cold. You want a fast, fair wholesale number and have zero patience for a retail pitch or qualifying questions. You call out any lowball instantly and walk. You do not need trust-building or the authority pitch; you need a sharp, accurate number near the top of the band.",
+  grading:"Items priced near melt and spot, dealer knows exact value. Signals: maximum knowledge, low attachment, the SHARPEST seller. Opening at 30 percent is an instant lost deal. Ideal landing is near the category caps. Skill tested: pricing accuracy and speed, dropping the retail script, protecting thin margin. Dock: running the full Show Sales Framework on a dealer (wastes their time), lowballing, or paying ABOVE cap to win. Best path: fast accurate near-cap wholesale, or pass if no margin."}
+];
+const DRILL_PERSONA_SETS={'m1.3':DRILL_PERSONAS,'m2.4':CLOSER_PERSONAS};
+function modulePersonas(id){return DRILL_PERSONA_SETS[id]||DRILL_PERSONAS;}
+
 const DRILL_RUBRICS={
  'm1.3':{script:'Appointment Setter phone call',beats:[
    {key:'acknowledge',label:'Acknowledged the concern or what the caller has, without arguing'},
@@ -247,10 +271,20 @@ const DRILL_RUBRICS={
    {key:'objection_move',label:'Used the right reframe for the objection raised (asking versus sold, honest reason, consignment with the cash-price floor, spouse welcome)'},
    {key:'price_discipline',label:'No firm dollar figure on unseen items, a range only after two price pushes, and priced junk only after photos'},
    {key:'ask_close',label:'Asked for the next step and, when booking, closed on two specific times, confirmed the appointment, and got a photo'}
+ ]},
+ 'm2.4':{script:'Table close (Show Sales Framework)',beats:[
+   {key:'clarify_trust',label:'Clarified why they came and captured contact info, matched tone, and established they are here to sell'},
+   {key:'qualify',label:'Ran the five reads (why plus contact, who they are and attachment, knowledge and last-looked-at, who the big collector is, and use-of-funds urgency, with what do you think it is worth as the expectation read). Missing urgency is at most partial'},
+   {key:'authority',label:'Positioned GSA (largest auction houses, thousands of transactions, 400-plus collectors, we do the work for you)'},
+   {key:'obstacles_early',label:'Surfaced and pre-handled price, pass-it-down, and spouse objections before delivering the number'},
+   {key:'evaluate_source',label:'Reviewed all items, asked to photograph them for the collectors, logged them, and stated the pricing source (spot for metals and coins, eBay sold for raw collectibles, greysheet for graded)'},
+   {key:'margin',label:'Calibrated the opening offer to the seller (low anchor near 30 percent only for the unaware, higher for the sharp so the deal does not die), negotiated up only with justification, landed in the right band for this seller, never above the category cap. Both lowballing a sharp seller and overpaying a soft one are docked'},
+   {key:'deliver_close',label:'Delivered the price upbeat, then ran the assumptive close (your total comes out to this, all I need is your ID and I can get you paid) and moved to clear the table as they reached for ID; ID, check, transaction sheet, photo, referral'},
+   {key:'consignment_transfer',label:'When the seller wanted max value or the lot was over 100k, pitched only the 10 percent and waived-over-100k, hyped the auction upside, and warm-transferred to Jason in the room with a referral'}
  ]}
 };
 
-const DRILL_QUOTA={'m1.3':{reps:5,score:80}};
+const DRILL_QUOTA={'m1.3':{reps:5,score:80},'m2.4':{reps:5,score:80}};
 function drillQuota(id){return DRILL_QUOTA[id]||{reps:5,score:80};}
 
 /* Objection bank: each drills ONE objection to automaticity. rubric keys reuse module beats where natural. */
@@ -286,6 +320,48 @@ const DRILL_OBJECTIONS={
    model:"Of course, no rush. Most people like to sleep on it. If you can text me a couple of photos of what you have, I can start getting you a real number, then you decide with everything in front of you. When should we get you in after that, [time A] or [time B]?",
    principle:"Shrink the next step to photos, then book.",
    rubric:[{key:'objection_move',label:'Moved to photos as the easy next step'},{key:'ask_close',label:'Booked a time after the photos'},{key:'associate',label:'Normalized wanting to think'}]}
+ ],
+ 'm2.4':[
+  {id:'another_shop',name:'Another shop offered more',line:"Another shop already offered me more than that.",
+   behavior:"You claim a higher offer elsewhere and use it as leverage. You back off only if the rep stays calm, asks what was offered and on which pieces, reframes value, and shows they can get more through the collectors or consignment, without just matching blindly.",
+   model:"I would never want you leaving money on the table. What did they offer, and on which pieces? A lot of shops quote high to get you in, then drop it at the table. Let me show you exactly how we value these and see if I can get you more through our collectors.",
+   principle:"Do not blind-match. Get specifics, reframe value, pivot to collectors or consignment.",
+   rubric:[{key:'obstacles_early',label:'Stayed calm and got the specifics instead of matching blindly'},{key:'margin',label:'Reframed value rather than just raising the number'},{key:'consignment_transfer',label:'Offered the collector or consignment path for the high pieces'}]},
+  {id:'per_gram',name:'What do you pay per gram or ounce',line:"Just tell me, what do you pay per gram?",
+   behavior:"You want one flat per-gram or per-ounce number. You keep pressing for it. You accept moving forward only when the rep explains it depends on purity and whether a piece beats melt, and offers to test and weigh everything item by item.",
+   model:"It is not one flat number, it depends on purity and whether a piece is worth more than melt. Let me weigh and test everything and I will show you item by item so it is clear.",
+   principle:"Do not quote a flat rate. Evaluate and show item by item.",
+   rubric:[{key:'margin',label:'Refused a flat rate and tied price to purity and melt'},{key:'evaluate_source',label:'Moved to test, weigh, and evaluate the items'}]},
+  {id:'pay_more',name:'Can you do a little better',line:"Come on, can you do a little better than that?",
+   behavior:"You push for a bump on the offer. You get a bump only if the rep justifies it from the items or a collector, not just to appease you, and the bump stays under the cap. If they cave instantly with no reason, you push again.",
+   model:"Let me take another look at your best pieces and see if a collector would push higher on those. If they do, I can move on those specific items.",
+   principle:"Move up only with justification, on specific pieces, never above cap.",
+   rubric:[{key:'margin',label:'Raised only with justification and stayed under cap'},{key:'evaluate_source',label:'Tied any increase to specific high pieces or a collector'}]},
+  {id:'internal_sheet',name:'Show me your internal sheet',line:"Just show me your internal pricing sheet so I can see what you are really paying.",
+   behavior:"You demand to see their internal pricing or buy sheet. You keep pushing. You settle only when the rep politely refuses and instead walks you through how each piece is valued so it feels transparent.",
+   model:"That is our proprietary collector pricing, so I cannot share the sheet itself, but I will walk you through how every piece is valued so it is completely transparent for you.",
+   principle:"Refuse to release the internal sheet. Offer transparency through the valuation instead.",
+   rubric:[{key:'margin',label:'Refused to release the internal sheet'},{key:'authority',label:'Offered transparency by explaining the valuation'}]},
+  {id:'expected_more',name:'I expected more than that',line:"Honestly, I expected a lot more than that.",
+   behavior:"You are disappointed by the number. You re-engage only when the rep reframes how value is set (collectability, key dates, condition), offers to try a collector, and lays out consignment for the pieces you expect more from.",
+   model:"I hear you. A lot of value comes down to collectability, key dates, and condition, which is why some pieces come in under what people expect. Let me see if I can get that number from another collector, and for the pieces you expect more from, consignment lets them go to auction for full value.",
+   principle:"Reframe how value is set, try the collector, pivot to consignment.",
+   rubric:[{key:'obstacles_early',label:'Reframed how value is set instead of arguing'},{key:'consignment_transfer',label:'Offered consignment for the high-expectation pieces'},{key:'margin',label:'Did not overpay just to satisfy the expectation'}]},
+  {id:'give_to_kids',name:'I will just give it to my kids',line:"You know what, for that I will just pass it down to my kids.",
+   behavior:"You use passing it down as a reason to walk. You reconsider only if the rep gently asks whether the kids actually collect and whether they would rather have cash toward something they want, without being pushy.",
+   model:"Totally understandable. Do your kids collect themselves? Sometimes the honest question is whether they would rather have cash toward something they are into, or have these sit in a closet. Either way is fine, I just want you to get the most out of them.",
+   principle:"Handle pass-it-down with the collect and closet questions, gently.",
+   rubric:[{key:'obstacles_early',label:'Handled pass-it-down with the collect and closet questions'},{key:'clarify_trust',label:'Stayed warm and kept trust rather than pressuring'}]},
+  {id:'keep_some',name:'I want to keep a few things',line:"I think I want to hold on to a few of these, actually.",
+   behavior:"You want to pull a few items out. You proceed when the rep calmly sets those aside and values the rest, not losing the deal over the few you keep.",
+   model:"Absolutely, let us set those aside for you. I will value everything else so you can see the number on what you are ready to move today.",
+   principle:"Set the kept items aside, keep the deal moving on the rest.",
+   rubric:[{key:'deliver_close',label:'Kept the deal moving on the remaining items'},{key:'clarify_trust',label:'Stayed easy and did not fight over the kept pieces'}]},
+  {id:'think_about_it',name:'I want to think about it',line:"Let me think about it and I will get back to you.",
+   behavior:"You stall to leave. You re-engage only if the rep finds the real reason, and if it is price, raises within reason and lays out lump sum versus consignment, and at minimum gets your contact info before you go.",
+   model:"Of course. Just so I understand, is it the number, or something else? If it is the number, let me see what I can do, and I can also lay out the lump sum today versus consigning it to auction for full value. Either way, let me grab your info so I can follow up.",
+   principle:"Find the real objection, offer lump sum versus consignment, capture info.",
+   rubric:[{key:'obstacles_early',label:'Found the real reason for the stall'},{key:'consignment_transfer',label:'Laid out lump sum versus consignment'},{key:'deliver_close',label:'Captured contact info before they left'}]}
  ]
 };
 function moduleObjections(id){return DRILL_OBJECTIONS[id]||null;}
@@ -461,7 +537,8 @@ function startDrill(id){
   if(!moduleDrill(id))return;
   if(!drillReady()){alert('The AI practice drill is not set up yet. An administrator can add the practice server in Administrator settings.');return;}
   const rub=moduleDrill(id);
-  const persona=DRILL_PERSONAS[Math.floor(Math.random()*DRILL_PERSONAS.length)];
+  const personas=modulePersonas(id);
+  const persona=personas[Math.floor(Math.random()*personas.length)];
   drillState={id,rub,persona,script:rub.script,focused:false,voice:false,busy:false,
     msgs:[{who:'cust',text:persona.opening}]};
   renderDrillChat();
@@ -493,7 +570,8 @@ function startBeatDrill(id,beatKey){
   if(!drillReady())return;
   const rub=moduleDrill(id);if(!rub)return;
   const beat=rub.beats.find(b=>b.key===beatKey);if(!beat)return;
-  const persona=DRILL_PERSONAS[Math.floor(Math.random()*DRILL_PERSONAS.length)];
+  const personas=modulePersonas(id);
+  const persona=personas[Math.floor(Math.random()*personas.length)];
   drillState={id,rub:{script:'Focus drill: '+beat.label,beats:[beat]},persona,script:'Focus drill',focused:true,voice:false,busy:false,
     msgs:[{who:'cust',text:persona.opening}]};
   renderDrillChat();
@@ -565,7 +643,7 @@ function drillEnd(){
   const repTurns=s.msgs.filter(m=>m.who==='rep').length;
   if(repTurns===0){const ee=document.getElementById('derr');if(ee)ee.textContent='Say at least one thing before ending the call.';return;}
   app.innerHTML=`<div class="fade"><h1>Scoring your call...</h1><div class="standard">Grading against the ${esc(s.script)} checklist.</div></div>`;
-  drillAPI('score',{script:s.script,rubric:s.rub.beats,transcript:drillTranscript(s)})
+  drillAPI('score',{script:s.script,rubric:s.rub.beats,transcript:drillTranscript(s),context:(s.persona&&s.persona.grading)?s.persona.grading:''})
     .then(r=>{logDrill(s.id,r,s.focused);renderDrillScore(r);})
     .catch(err=>{app.innerHTML=`<div class="fade"><h1>Scoring failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderDrillChat()">Back to the call</button></div>`;});
 }
