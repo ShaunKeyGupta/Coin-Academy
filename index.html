@@ -241,27 +241,28 @@ const DRILL_PERSONAS=[
 
 /* In-person table sellers for the closer drill (m2.4). Each carries hidden grading notes the rep never sees. */
 const CLOSER_PERSONAS=[
- {name:'Multi-Offer Shopper',opening:"I have already been to a couple other places today, so I know roughly what this is worth. What can you do for me?",
-  behavior:"You have gold jewelry and a few collectible coins. You took them out recently and name that other shops looked at them. You push hard: ask what they pay per gram, per ounce, per lot, ask to see their internal sheet, say another shop offered more, ask if they can do a little better. Short drive, heard about them online. You are knowledgeable enough to spot a lowball and you walk if the opening offer is insulting. You only commit when the rep builds trust, justifies value, and lands a fair number, or pivots the high pieces to consignment.",
+ {name:'Multi-Offer Shopper',opening:"Hey, how's it going? I brought in some gold jewelry and a few coins to see what they're worth.",
+  behavior:"You just walked in and set your items on the table. Start friendly and normal. As the rep goes through the items and asks questions, answer honestly: you took them out recently and a couple other shops already looked at them, short drive, you heard about them online, and you know a bit about this stuff. Do NOT lead with objections. Only AFTER the rep evaluates and gives you a number do you start pushing: ask what they pay per gram, per ounce, or per lot, say another shop offered more, ask if they can do a little better, and ask to see their internal sheet. You walk if the first offer is insulting. You commit when the rep builds trust, justifies the value, lands a fair number, or pivots the high pieces to consignment.",
   grading:"Items roughly 3000 to 4000 dollars, mostly gold scrap (90 percent cap off spot) plus a few raw collectible coins (80 percent cap off eBay sold). Signals: knowledgeable, recently shopped, short drive, online, so a SHARP seller. Opening at the 30 percent floor loses the deal and must be docked; the opener should be higher, around 55 to 65 percent. Ideal landing band is roughly 70 to 80 percent given the competition, never over the caps. Dock: exceeding caps or releasing the internal sheet. Best path: cash the gold near band, pivot the collectible coins to Jason on consignment."},
- {name:'Inherited Collection',opening:"These were my father's. I honestly have no idea what any of it is worth, I just know he cared about them.",
-  behavior:"You inherited a box of coins and some jewelry. You are unsure and a little sentimental. Answers: you do not need money urgently, you are not a collector, your kids are not interested, you have not had them looked at recently, you drove a fair distance. Not knowledgeable. You respond to trust, patience, and being told honestly what things are. You may say you want to pass it down, or that you will think about it. You can be moved to a cash sale or consignment if treated with care.",
+ {name:'Inherited Collection',opening:"Hi, thanks for seeing me. These were my father's, I brought the whole box in. I honestly don't know what any of it is.",
+  behavior:"You just walked in and set down a box of coins and jewelry. You are unsure and a little sentimental. As the rep looks through it and asks questions, answer honestly: you do not need money urgently, you are not a collector, your kids are not interested, you have not had it looked at recently, you drove a fair distance. You are not knowledgeable. You respond to trust, patience, and being told honestly what things are. Later you may say you want to pass it down, or that you will think about it. You can be moved to a cash sale or consignment if treated with care.",
   grading:"Items roughly 2000 to 6000 dollars, mixed metals and raw coins. Signals: low knowledge, low urgency, some sentiment, fair drive, not a collector, so a SOFT, unaware seller. Opening can be lower, around 35 to 45 percent, and still close. Ideal landing band 45 to 60 percent. The main leak to DOCK is OVERPAYING (paying near the caps when signals say they would take far less). Also dock failing to handle pass-it-down, or being pushy and losing trust. Best path: clean cash buy well under cap, or consignment on the better coins."},
- {name:'Walk-In With Junk',opening:"I have got a whole bag of jewelry and old coins here, figured I would see what it is worth.",
-  behavior:"Most items are plated, costume, or common low-value coins, maybe one small real piece. You think it might be worth a lot. You answer questions and are not knowledgeable. The right outcome is honesty: the rep triages, kindly tells you what is real and what is not, makes a small fair offer on anything real, and does not waste a full closing pitch on junk. You are satisfied by honesty and good treatment.",
+ {name:'Walk-In With Junk',opening:"Hi there, I've got a bag of old jewelry and coins here, wasn't sure if any of it's worth anything.",
+  behavior:"You just walked in and emptied a bag onto the table. Most items are plated, costume, or common low-value coins, maybe one small real piece. You think it might be worth a lot. You answer questions and are not knowledgeable. The right outcome is honesty: the rep looks through it, kindly tells you what is real and what is not, makes a small fair offer on anything real, and does not run a full closing pitch on junk. You are satisfied by honesty and good treatment.",
   grading:"Items mostly junk, real value under 200 dollars. Correct move is fast, honest triage and a small fair offer or a polite no, NOT the full Show Sales close and NOT overpaying. Dock: running the full high-pressure close on junk, overpaying for costume or plated as if real, or being dismissive. Best path: quick honest read, small fair cash on anything real, keep goodwill."},
- {name:'Whale',opening:"I have a substantial collection, this is just a sample. If we work well together there is a lot more where this came from.",
-  behavior:"High-value items, easily over 100k across the full collection. You are knowledgeable, value your time, and want to be treated as a serious seller. You probe whether they can handle volume and get top dollar. Not desperate. You respond to authority, the auction upside, and being introduced to the right person. You expect near retail and push back on a pure cash lowball.",
+ {name:'Whale',opening:"Good to meet you. I brought a sample of my collection in to see how you operate, there's a lot more where this came from.",
+  behavior:"You just walked in and laid out a sample of high-value items. The full collection is easily over 100k. You are knowledgeable, value your time, and want to be treated as a serious seller. As the rep handles the items, you probe whether they can handle volume and get top dollar. You are not desperate. You respond to authority, the auction upside, and being introduced to the right person. You expect near retail and push back on a pure cash lowball.",
   grading:"Sample is high value, full collection over 100k, so the consignment fee is WAIVED over 100k. Signals: knowledgeable, high value, low urgency, serious, so a CONSIGNMENT-FIRST deal. The win is NOT a cash lowball, it is hyping auction upside, mentioning the 10 percent and that it is waived over 100k, and a warm transfer to Jason. Dock: trying to cash-buy the whole thing cheap, missing the consignment pivot, or failing the warm transfer. Best path: cash the bullion fairly, consign the collectibles, transfer to Jason."},
- {name:'Emotional Seller',opening:"I really do not want to sell these, but I think I have to. It has been a hard year.",
-  behavior:"You are attached and a little distressed. You may need the money (some urgency) but it hurts to let go. You answer questions but get emotional about where the items came from. You respond to empathy and patience, not pressure. Pushing too hard makes you shut down and want to keep them or pass them down. Handled with care, you will sell.",
+ {name:'Emotional Seller',opening:"Hi... sorry, this is a little hard for me. I brought some things in that I think I need to sell.",
+  behavior:"You just walked in and carefully set your items down. You are attached and a little distressed. You may need the money (some urgency) but it hurts to let go. You answer the rep's questions but get emotional about where the items came from. You respond to empathy and patience, not pressure. Pushing too hard makes you shut down and want to keep them or pass them down. Handled with care, you will sell.",
   grading:"Items moderate value. Signals: high attachment, some urgency, low knowledge. The skill tested is trust and empathy under emotion, plus not overpaying out of sympathy. Ideal landing band mid range. Dock: high-pressure tactics that break trust, overpaying because of the emotion, or fumbling the pass-it-down stall. Best path: empathetic close at a fair under-cap number, or a gentle consignment option."},
- {name:'Dealer',opening:"I am in the business myself, so let us not waste each other's time. Give me your best wholesale on these.",
-  behavior:"You are a knowledgeable dealer who knows melt, spot, and grades cold. You want a fast, fair wholesale number and have zero patience for a retail pitch or qualifying questions. You call out any lowball instantly and walk. You do not need trust-building or the authority pitch; you need a sharp, accurate number near the top of the band.",
+ {name:'Dealer',opening:"Hey. I'm in the trade myself, brought a few things by. Let's take a look at what you've got room on.",
+  behavior:"You just walked in, sat down, and laid out your items. You are a knowledgeable dealer who knows melt, spot, and grades cold. You have little patience for a retail pitch or a long round of qualifying questions; you want a fast, fair wholesale number. You call out any lowball instantly and will get up and leave. You do not need trust-building or the authority pitch, you need a sharp, accurate number near the top of the band.",
   grading:"Items priced near melt and spot, dealer knows exact value. Signals: maximum knowledge, low attachment, the SHARPEST seller. Opening at 30 percent is an instant lost deal. Ideal landing is near the category caps. Skill tested: pricing accuracy and speed, dropping the retail script, protecting thin margin. Dock: running the full Show Sales Framework on a dealer (wastes their time), lowballing, or paying ABOVE cap to win. Best path: fast accurate near-cap wholesale, or pass if no margin."}
 ];
 const DRILL_PERSONA_SETS={'m1.3':DRILL_PERSONAS,'m2.4':CLOSER_PERSONAS};
 function modulePersonas(id){return DRILL_PERSONA_SETS[id]||DRILL_PERSONAS;}
+function moduleSetting(id){return id==='m2.4'?'in_person':'phone';}
 
 const DRILL_RUBRICS={
  'm1.3':{script:'Appointment Setter phone call',beats:[
@@ -539,7 +540,7 @@ function startDrill(id){
   const rub=moduleDrill(id);
   const personas=modulePersonas(id);
   const persona=personas[Math.floor(Math.random()*personas.length)];
-  drillState={id,rub,persona,script:rub.script,focused:false,voice:false,busy:false,
+  drillState={id,rub,persona,script:rub.script,setting:moduleSetting(id),focused:false,voice:false,busy:false,
     msgs:[{who:'cust',text:persona.opening}]};
   renderDrillChat();
 }
@@ -562,7 +563,7 @@ function startObjectionDrill(id,objId){
   if(!drillReady()){alert('The AI practice drill is not set up yet. Ask an administrator to connect the practice server.');return;}
   const o=(moduleObjections(id)||[]).find(x=>x.id===objId);if(!o)return;
   const persona={name:o.name,opening:o.line,behavior:o.behavior};
-  drillState={id,objId,rub:{script:'Objection: '+o.name,beats:o.rubric},persona,script:'Objection: '+o.name,focused:true,voice:false,busy:false,
+  drillState={id,objId,rub:{script:'Objection: '+o.name,beats:o.rubric},persona,script:'Objection: '+o.name,setting:moduleSetting(id),focused:true,voice:false,busy:false,
     msgs:[{who:'cust',text:o.line}]};
   renderDrillChat();
 }
@@ -572,7 +573,7 @@ function startBeatDrill(id,beatKey){
   const beat=rub.beats.find(b=>b.key===beatKey);if(!beat)return;
   const personas=modulePersonas(id);
   const persona=personas[Math.floor(Math.random()*personas.length)];
-  drillState={id,rub:{script:'Focus drill: '+beat.label,beats:[beat]},persona,script:'Focus drill',focused:true,voice:false,busy:false,
+  drillState={id,rub:{script:'Focus drill: '+beat.label,beats:[beat]},persona,script:'Focus drill',setting:moduleSetting(id),focused:true,voice:false,busy:false,
     msgs:[{who:'cust',text:persona.opening}]};
   renderDrillChat();
 }
@@ -585,9 +586,9 @@ function renderDrillChat(){
   const vbtn=voiceSupported()?`<button class="btn btn-ghost" id="vtoggle" onclick="drillToggleVoice()">Voice: ${s.voice?'On':'Off'}</button>`:'';
   const mic=(voiceSupported()&&s.voice)?`<button class="btn btn-ghost" id="micbtn" onclick="drillMic()">${s.listening?'Listening, tap to stop':'Tap to talk'}</button>`:'';
   app.innerHTML=`<div class="fade">
-    <div class="admin-head"><div><div class="crumb">${esc(s.script)}</div><h1>Practice Call</h1></div>
+    <div class="admin-head"><div><div class="crumb">${esc(s.script)}</div><h1>${s.setting==='in_person'?'Practice Sit-Down':'Practice Call'}</h1></div>
       <button class="btn btn-gold" onclick="drillExit()">Exit</button></div>
-    <div class="standard" style="margin-top:0">A live customer is on the line. Run the phone framework. When you are done, end the call to get scored on the exact checklist your real calls are graded on. ${vbtn}</div>
+    <div class="standard" style="margin-top:0">${s.setting==='in_person'?'A customer just walked in and their items are on the table in front of you. Greet them and run the Show Sales Framework, then end the session to get scored on the checklist.':'A live customer is on the line. Run the phone framework. When you are done, end the call to get scored on the exact checklist your real calls are graded on.'} ${vbtn}</div>
     <div id="dscroll" class="dchat">${s.msgs.map(drillBubble).join('')}${s.busy?'<div class="dbubble dcust"><div class="dwho">Customer</div><div class="dtyping">...</div></div>':''}</div>
     <div class="dinrow">
       <textarea id="dinput" class="dinput" rows="2" placeholder="Type or tap to talk your full response, then Send. Shift+Enter for a new line." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();drillSend();}"></textarea>
@@ -633,7 +634,7 @@ function drillSend(){
   const di=document.getElementById('dinput');const text=(di?di.value:'').trim();if(!text)return;
   s.msgs.push({who:'rep',text});s.busy=true;renderDrillChat();
   const api=s.msgs.slice(1).map(m=>({role:m.who==='rep'?'user':'assistant',content:m.text}));
-  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,messages:api,maxTokens:500})
+  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,setting:s.setting,messages:api,maxTokens:500})
     .then(r=>{const reply=(r&&r.reply)?r.reply:'(no response)';s.msgs.push({who:'cust',text:reply});s.busy=false;renderDrillChat();drillSpeak(reply);})
     .catch(err=>{s.busy=false;renderDrillChat();const ee=document.getElementById('derr');if(ee)ee.textContent='Could not reach the practice server. '+err.message;});
 }
