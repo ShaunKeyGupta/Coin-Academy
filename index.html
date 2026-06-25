@@ -114,7 +114,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <div class="brand"><span class="mark">CA</span> Consignment Academy</div>
+  <div class="brand"><span class="mark">CA</span> Consignment Academy <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:5px;letter-spacing:0">v4 &middot; 27 modules + AI</span></div>
   <nav class="tabs" id="tabs">
     <button data-v="ladder" class="on">Ladder</button>
     <button data-v="study">Study</button>
@@ -1161,11 +1161,27 @@ function renderExplain(m){
  if(!E){el.innerHTML='<p class="muted small">No explain drill for this module.</p>';return}
  if(!S.settings.proxyUrl){el.innerHTML=`<div class="notice">The explain drill needs the practice server. Add the proxy URL and passcode in the Admin tab to turn it on. Until then, passing the written test certifies this module.</div>`;return}
  el.innerHTML=`<div class="panel"><p><b>Prompt:</b> ${E.prompt}</p>
-   <p class="muted small">Say it the way you would to a real seller, in plain language. The AI grades each required point as hit, partial, or miss. Pass mark ${S.settings.explainTarget}%.</p>
-   <textarea id="explainText" rows="6" placeholder="Type your explanation here, as if speaking to the seller..."></textarea>
-   <div class="row" style="margin-top:10px"><button class="btn" id="gradeExplain">Submit explanation</button><span id="explainmsg" class="muted small"></span></div>
+   <p class="muted small">Say it the way you would to a real seller, in plain language. Tap the mic and talk, or type. It keeps recording until you tap stop, so take your time. The AI grades each required point as hit, partial, or miss. Pass mark ${S.settings.explainTarget}%.</p>
+   <div class="row" style="margin-bottom:8px"><button class="btn ghost" id="micBtn" type="button">Tap to talk</button><span id="micStatus" class="muted small"></span></div>
+   <textarea id="explainText" rows="6" placeholder="Tap the mic and speak, or type your explanation here, as if speaking to the seller..."></textarea>
+   <div class="row" style="margin-top:10px"><button class="btn" id="gradeExplain">Submit explanation</button><button class="btn ghost" id="clearExplain" type="button">Clear</button><span id="explainmsg" class="muted small"></span></div>
    <div id="explainResult"></div></div>`;
+ const ta=document.getElementById("explainText");
+ const micBtn=document.getElementById("micBtn"),micStatus=document.getElementById("micStatus");
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ let rec=null,listening=false,baseText="",finalBuf="";
+ function stopMic(){listening=false;micBtn.textContent="Tap to talk";micBtn.style.borderColor="";micBtn.style.color="";micStatus.textContent="";if(rec){try{rec.stop();}catch(_){}}}
+ if(!SR){micBtn.disabled=true;micBtn.textContent="Voice not supported here";micStatus.textContent="Use Chrome or Edge, or just type.";}
+ else{
+   rec=new SR();rec.lang="en-US";rec.continuous=true;rec.interimResults=true;
+   rec.onresult=(e)=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finalBuf+=t+" ";else interim+=t;}ta.value=(baseText?baseText+" ":"")+finalBuf+interim;};
+   rec.onerror=(e)=>{micStatus.textContent=e.error==="not-allowed"?"Microphone blocked. Allow mic access for this site, then tap again.":"Voice error: "+e.error+". You can type instead.";stopMic();};
+   rec.onend=()=>{if(listening){try{rec.start();}catch(_){}}};
+   micBtn.onclick=()=>{if(listening){stopMic();}else{listening=true;baseText=ta.value.trim();finalBuf="";micBtn.textContent="Listening, tap to stop";micBtn.style.borderColor="var(--red)";micBtn.style.color="var(--red)";micStatus.textContent="Recording. Tap stop when you are done.";try{rec.start();}catch(_){}}};
+ }
+ document.getElementById("clearExplain").onclick=()=>{stopMic();ta.value="";finalBuf="";baseText="";};
  document.getElementById("gradeExplain").onclick=async()=>{
+   stopMic();
    const txt=document.getElementById("explainText").value.trim();const msg=document.getElementById("explainmsg");
    if(txt.length<40){msg.textContent="Give a fuller explanation first.";return}
    msg.textContent="Grading...";document.getElementById("gradeExplain").disabled=true;
