@@ -1543,7 +1543,7 @@ function renderExplain(){
     <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}Pass ${explainQuotaFor(s.id)} different questions at ${explainPass(s.id)} or higher. ${count} of ${explainQuotaFor(s.id)} passed.</div>
     <div class="standard" style="margin-top:0"><b>Your question</b><br>${esc(s.data.prompts[s.idx])}</div>
     <div class="lesson-note" style="margin:8px 2px">Explain it in your own words. Plain language is fine; you do not need the exact wording.</div>
-    <textarea id="einput" rows="6" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font:inherit" placeholder="Speak or type your explanation here..."></textarea>
+    <textarea id="einput" class="dinput" rows="6" style="width:100%;box-sizing:border-box;min-height:130px" placeholder="Speak or type your explanation here..."></textarea>
     <div id="eerr" class="lesson-note" style="color:#e0a06a;min-height:16px;margin:6px 2px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
       ${v?`<button class="btn btn-ghost" id="emic" onclick="explainMic()">Tap to talk</button>`:''}
