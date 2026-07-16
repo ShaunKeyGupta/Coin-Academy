@@ -285,8 +285,8 @@ const DRILL_RUBRICS={
  ]}
 };
 
-const DRILL_QUOTA={'m1.3':{reps:5,score:80},'m2.4':{reps:5,score:80}};
-function drillQuota(id){return DRILL_QUOTA[id]||{reps:5,score:80};}
+const DRILL_QUOTA={'m1.3':{personas:4,score:80},'m2.4':{personas:4,score:80}};
+function drillQuota(id){const b=DRILL_QUOTA[id]||{personas:4,score:80};const pv=parseInt(gateFor(id,'drillPersonas'),10),sv=parseInt(gateFor(id,'drillScore'),10);return {personas:(pv>=1&&pv<=6)?pv:b.personas,score:(sv>=50&&sv<=100)?sv:b.score};}
 
 /* Objection bank: each drills ONE objection to automaticity. rubric keys reuse module beats where natural. */
 const DRILL_OBJECTIONS={
@@ -393,9 +393,29 @@ const FLASHCARDS=[
 /* ---- structure helpers ---- */
 /* ---- Explain-it-out-loud drill (knowledge) ---- */
 const EXPLAIN_QUOTA=3, EXPLAIN_PARTIAL=0.65;
-function explainPass(){const v=parseInt(localStorage.getItem('sa_explainpass_v1'),10);return (v>=50&&v<=100)?v:80;}
-function setExplainPass(n){const v=parseInt(n,10);if(v>=50&&v<=100)localStorage.setItem('sa_explainpass_v1',String(v));}
-function saveExplainMark(){const el=document.getElementById('explainmark');if(!el)return;const v=parseInt(el.value,10);if(!(v>=50&&v<=100)){const s=document.getElementById('explainmarksaved');if(s)s.textContent='Enter 50 to 100.';return;}setExplainPass(v);const s=document.getElementById('explainmarksaved');if(s)s.textContent='Saved at '+v+'.';}
+/* Gate settings: global defaults plus per-module overrides. Silent migration from older keys. */
+const GATES_STORE='sa_gates_v1';
+function gatesAll(){
+  const g=load(GATES_STORE,null);
+  if(g&&g.def)return g;
+  const legacy=parseInt(localStorage.getItem('sa_explainpass_v1'),10);
+  const seeded={def:{explainPass:(legacy>=50&&legacy<=100)?legacy:80,explainQuota:3,drillScore:80,drillPersonas:4},mods:{}};
+  save(GATES_STORE,seeded);return seeded;
+}
+function saveGates(g){save(GATES_STORE,g);}
+function gateFor(id,key){
+  const g=gatesAll();
+  if(id&&g.mods[id]&&g.mods[id][key]!==undefined&&g.mods[id][key]!==null&&g.mods[id][key]!=='')return g.mods[id][key];
+  return g.def[key];
+}
+function setGateDefault(key,val){const g=gatesAll();g.def[key]=val;saveGates(g);}
+function setGateOverride(id,key,val){const g=gatesAll();g.mods[id]=g.mods[id]||{};
+  if(val===null||val===''||val===undefined)delete g.mods[id][key];else g.mods[id][key]=val;
+  if(!Object.keys(g.mods[id]).length)delete g.mods[id];saveGates(g);}
+function explainPass(id){const v=parseInt(gateFor(id,'explainPass'),10);return (v>=50&&v<=100)?v:80;}
+function explainQuotaFor(id){const v=parseInt(gateFor(id,'explainQuota'),10);return (v>=1&&v<=7)?v:3;}
+function passMarkFor(id){const g=gatesAll();const o=(g.mods[id]&&g.mods[id].passMark);const v=parseInt(o,10);
+  if(v>=50&&v<=100)return v;const {mod}=findModule(id);return mod?mod.passMark:85;}
 const EXPLAIN={
  'm1.1':{concept:"who we are and the appointment setter role",
   points:[
@@ -879,7 +899,7 @@ const EXPLAIN={
 };
 function hasExplain(id){return !!EXPLAIN[id];}
 function explainPassedIdx(p,id){return (p&&p.explain&&p.explain[id]&&Array.isArray(p.explain[id].passed))?p.explain[id].passed:[];}
-function explainCleared(p,id){return explainPassedIdx(p,id).length>=EXPLAIN_QUOTA;}
+function explainCleared(p,id){return explainPassedIdx(p,id).length>=explainQuotaFor(id);}
 function explainReady(p,id){return !hasExplain(id)||explainCleared(p,id);}
 function flatModules(){const l=[];CURRICULUM.forEach(t=>t.modules.forEach(m=>l.push({tier:t,mod:m})));return l;}
 function tierById(id){return CURRICULUM.find(t=>t.id===id);}
@@ -891,13 +911,50 @@ function finalPassed(p,tid){return !!(p.finals&&p.finals[tid]&&p.finals[tid].pas
 function tierComplete(p,tid){return modulesAllPassed(p,tid)&&finalPassed(p,tid);}
 function programComplete(p){return tierComplete(p,'tier1')&&tierComplete(p,'tier2')&&(tierComplete(p,'tier3a')||tierComplete(p,'tier3b'));}
 function finalStatus(p,tid){if(!modulesAllPassed(p,tid))return'locked';return finalPassed(p,tid)?'passed':'available';}
+const LOC_STORE='sa_location_v1';
+function getLocation(){return localStorage.getItem(LOC_STORE)||'';}
+function setLocation(v){localStorage.setItem(LOC_STORE,String(v||''));}
+function certId(name,id,ts){
+  const base=(name+'|'+id+'|'+ts);
+  let h=0;for(let i=0;i<base.length;i++){h=((h<<5)-h+base.charCodeAt(i))|0;}
+  const short=Math.abs(h).toString(36).toUpperCase().slice(0,6);
+  const d=new Date(ts);
+  return 'CSA-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+'-'+short;
+}
 function certifyModule(p,id,by){
   const rec=p.modules[id]||{status:'available',best:0,attempts:0};
   if(rec.status!=='passed')rec.status='passed';
-  rec.signoff={by:by,at:Date.now()};
+  const at=Date.now();
+  rec.signoff={by:by,at:at,loc:getLocation(),cert:certId(p.name||'',id,at)};
   p.modules[id]=rec;p.log=p.log||[];
-  p.log.push({type:'signoff',id:id,by:by,ts:Date.now()});
+  p.log.push({type:'signoff',id:id,by:by,ts:at,loc:rec.signoff.loc,cert:rec.signoff.cert});
   ensureCompletion(p);persist(p);
+  notifySignoff(p,id,rec.signoff);
+}
+/* ---- sign-off alerts ---- */
+const HOOK_STORE='sa_hook_v1';
+function getHook(){return load(HOOK_STORE,{url:'',email:''});}
+function setHook(h){save(HOOK_STORE,h);}
+function notifySignoff(p,id,so){
+  const h=getHook();if(!h.url)return;
+  const {tier,mod}=findModule(id);
+  const body={event:'module_certified',trainee:p.name||'',module:mod?mod.name:id,moduleId:id,tier:tier?tier.name:'',
+    certifiedBy:so.by,location:so.loc||'',certId:so.cert||'',at:new Date(so.at).toISOString(),email:h.email||''};
+  try{fetch(h.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{});}catch(e){}
+}
+function saveHook(){
+  const u=document.getElementById('hookurl'),e=document.getElementById('hookmail');
+  setHook({url:u?u.value.trim():'',email:e?e.value.trim():''});
+  const s=document.getElementById('hooksaved');if(s)s.textContent='Saved.';
+}
+function testHook(){
+  const h=getHook();const s=document.getElementById('hooksaved');
+  if(!h.url){if(s)s.textContent='Add a webhook URL first, then Save.';return;}
+  if(s)s.textContent='Sending a test...';
+  fetch(h.url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({event:'test',trainee:'Test Trainee',module:'Connection test',tier:'',certifiedBy:'Admin',location:getLocation(),certId:'CSA-TEST',at:new Date().toISOString(),email:h.email||''})})
+    .then(()=>{if(s)s.textContent='Test sent. Check Slack and email.';})
+    .catch(err=>{if(s)s.textContent='Failed: '+err.message;});
 }
 
 function computeStatus(p){
@@ -918,6 +975,7 @@ function computeStatus(p){
   openTier(tierById('tier2').modules,tierComplete(p,'tier1'));
   openTier(tierById('tier3a').modules,tierComplete(p,'tier2'));
   openTier(tierById('tier3b').modules,tierComplete(p,'tier2'));
+  if(p.unlocked)Object.keys(p.unlocked).forEach(k=>{if(p.unlocked[k]&&s[k]==='locked')s[k]='available';});
   return s;
 }
 function stats(p){const total=flatModules().length;let passed=0;CURRICULUM.forEach(t=>t.modules.forEach(m=>{if(isCertified(p,m.id))passed++;}));return{passed,total,pct:Math.round(passed/total*100)};}
@@ -926,7 +984,9 @@ function stats(p){const total=flatModules().length;let passed=0;CURRICULUM.forEa
 function getTrainees(){return load(STORE.trainees,{});}
 function saveTrainees(t){save(STORE.trainees,t);}
 function currentName(){return load(STORE.current,null);}
-function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};p.explain=p.explain||{};if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
+function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};p.explain=p.explain||{};p.unlocked=p.unlocked||{};
+  Object.keys(p.drills).forEach(k=>{const d=p.drills[k];if(d&&!Array.isArray(d.passed))d.passed=[];});
+  if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
 function currentProgress(){const t=getTrainees();const n=currentName();return n&&t[n]?normalize(t[n]):null;}
 function persist(p){const t=getTrainees();t[p.name]=p;saveTrainees(t);}
 function newTrainee(n){return{name:n,created:Date.now(),lastActivity:Date.now(),modules:{},finals:{},signoff:{tier3a:false,tier3b:false},completedAt:null,log:[]};}
@@ -939,6 +999,10 @@ function renderTopbar(){
   const n=currentName();
   topbarRight.innerHTML=n?`<span class="whoami">Trainee: <b>${esc(n)}</b></span>
     <button class="btn btn-ghost" onclick="goDash()">Dashboard</button>
+    <button class="btn btn-ghost" onclick="renderStudyPick()">Study</button>
+    <button class="btn btn-ghost" onclick="renderPlaybook()">Playbook</button>
+    <button class="btn btn-ghost" onclick="renderQuizSetup()">Quiz</button>
+    <button class="btn btn-ghost" onclick="renderBest()">Best Calls${getBest().length?' ('+getBest().length+')':''}</button>
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>`:'';
 }
 function logout(){save(STORE.current,null);renderLogin();renderTopbar();}
@@ -1028,9 +1092,33 @@ function voiceSupported(){return !!(window.SpeechRecognition||window.webkitSpeec
 function startDrill(id){
   if(!moduleDrill(id))return;
   if(!drillReady()){alert('The AI practice drill is not set up yet. An administrator can add the practice server in Administrator settings.');return;}
+  renderPersonaPick(id);
+}
+function renderPersonaPick(id){
+  const personas=modulePersonas(id);
+  const p=previewMode?null:currentProgress();
+  const passed=drillPassed(p,id);
+  const q=drillQuota(id);
+  const need=Math.min(q.personas,personas.length);
+  const {tier,mod}=findModule(id);
+  const cards=personas.map((pr,i)=>{
+    const done=passed.indexOf(pr.name)!==-1;
+    return `<div class="standard" style="margin-top:0;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div><b>${esc(pr.name)}</b> ${done?'<span class="pill pill-g">passed</span>':'<span class="pill pill-l">not yet</span>'}</div>
+      <button class="btn ${done?'btn-ghost':'btn-gold'}" onclick="beginDrill('${id}',${i})">${done?'Run again':'Start'}</button></div>`;
+  }).join('');
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(tier.name)} ${previewMode?'(preview)':''}</div><h1>Pick your customer</h1></div>
+    <button class="btn btn-ghost" onclick="${previewMode?`openModulePreview('${id}')`:`openModule('${id}')`}">Back to module</button></div>
+    <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}Pass ${need} different customers at ${q.score} or higher to be ready for sign-off. ${passed.length} of ${need} passed.</div>
+    <div class="lesson-note" style="margin:8px 2px">Each customer behaves differently. Passing the same one twice counts once, so work through the ones you have not cleared.</div>
+    ${cards}</div>`;
+  window.scrollTo(0,0);
+}
+function beginDrill(id,idx){
   const rub=moduleDrill(id);
   const personas=modulePersonas(id);
-  const persona=personas[Math.floor(Math.random()*personas.length)];
+  const persona=personas[idx]||personas[0];
   drillState={id,rub,persona,script:rub.script,setting:moduleSetting(id),focused:false,voice:false,busy:false,
     msgs:[{who:'cust',text:persona.opening}]};
   renderDrillChat();
@@ -1130,6 +1218,226 @@ function drillSend(){
     .catch(err=>{s.busy=false;renderDrillChat();const ee=document.getElementById('derr');if(ee)ee.textContent='Could not reach the practice server. '+err.message;});
 }
 function drillTranscript(s){return s.msgs.map(m=>(m.who==='rep'?'Rep: ':'Customer: ')+m.text).join('\n');}
+
+/* ---- Scenario auto-tagging ---- */
+const SCEN_RE=/(a customer|the customer|a seller|the seller|a caller|the caller|walks in|walk-in|brings in|hands you|shows you|calls in|you are at|during a|mid-|what do you do|what should you do|how do you respond|what is your (next )?(move|step)|says|insists|demands|refuses|wants to|asks for|is about to walk|scenario)/i;
+function isScenario(q){
+  if(!q||!q.q)return false;
+  if(q.scenario===true)return true;
+  const t=String(q.q);
+  if(t.length<40)return false;
+  return SCEN_RE.test(t);
+}
+function scenarioTag(q){return isScenario(q)?'<span class="pill pill-a" style="margin-left:8px">scenario</span>':'';}
+
+/* ---- Study decks ---- */
+const STUDY_IMG={};
+let STUDYST=null;
+function studyDeck(id){
+  const cards=[];
+  const ex=EXPLAIN[id];
+  if(ex)ex.points.forEach((p,i)=>cards.push({kind:'fact',front:'Key fact '+(i+1)+' of '+ex.points.length,back:p,img:(STUDY_IMG[id]&&STUDY_IMG[id]['p'+i])||''}));
+  const {mod}=findModule(id);
+  (mod.test||[]).forEach((q,i)=>cards.push({kind:'q',front:q.q,back:q.o[q.a]+(q.e?'\n\nWhy: '+q.e:''),img:(STUDY_IMG[id]&&STUDY_IMG[id]['q'+i])||''}));
+  return cards;
+}
+function renderStudyPick(){
+  const list=teachingModules();
+  const byTier={};list.forEach(x=>{(byTier[x.tier.id]=byTier[x.tier.id]||{tier:x.tier,mods:[]}).mods.push(x.mod);});
+  let blocks='';
+  Object.keys(byTier).forEach(tid=>{
+    const g=byTier[tid];
+    blocks+=`<h2 style="font-family:'Fraunces';font-size:18px;margin:20px 0 8px;color:var(--gold-bright)">${esc(g.tier.name)}</h2>`;
+    g.mods.forEach(m=>{
+      const n=studyDeck(m.id).length;
+      blocks+=`<div class="standard" style="margin-top:0;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><b>${esc(m.name)}</b><div class="lesson-note">${n} cards</div></div>
+        <button class="btn btn-gold" onclick="startStudy('${m.id}')">Study</button></div>`;
+    });
+  });
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">Cram before a test, nothing here is graded</div><h1>Study</h1></div>
+    <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+    <div class="passbar">Each deck holds the module's key facts plus every question from its bank, with the answer and the why on the back.</div>
+    ${blocks}</div>`;
+  window.scrollTo(0,0);
+}
+function startStudy(id){
+  const cards=shuffle(studyDeck(id));
+  if(!cards.length)return;
+  STUDYST={id,cards,i:0,flipped:false};
+  renderStudy();
+}
+function renderStudy(){
+  const s=STUDYST;if(!s)return;
+  const c=s.cards[s.i];const {mod}=findModule(s.id);
+  const img=c.img?`<img src="img/${esc(c.img)}" alt="" style="max-width:100%;border-radius:10px;margin-bottom:12px" onerror="this.style.display='none'">`:'';
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(mod.name)}</div><h1>Study</h1></div>
+    <button class="btn btn-ghost" onclick="renderStudyPick()">All decks</button></div>
+    <div class="passbar">Card ${s.i+1} of ${s.cards.length}. ${c.kind==='fact'?'Key fact':'Bank question'}. Tap the card to flip.</div>
+    <div class="standard" style="min-height:180px;cursor:pointer" onclick="studyFlip()">
+      ${img}
+      <div style="font-size:16px;line-height:1.7;white-space:pre-wrap">${esc(s.flipped?c.back:c.front)}</div>
+      <div class="lesson-note" style="margin-top:14px">${s.flipped?'Answer':'Tap to reveal'}</div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+      <button class="btn btn-ghost" onclick="studyMove(-1)">Back</button>
+      <button class="btn btn-ghost" onclick="studyFlip()">Flip</button>
+      <button class="btn btn-gold" onclick="studyMove(1)">Next</button>
+      <button class="btn btn-ghost" onclick="startStudy('${s.id}')">Reshuffle</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function studyFlip(){if(!STUDYST)return;STUDYST.flipped=!STUDYST.flipped;renderStudy();}
+function studyMove(d){if(!STUDYST)return;const n=STUDYST.cards.length;STUDYST.i=(STUDYST.i+d+n)%n;STUDYST.flipped=false;renderStudy();}
+
+/* ---- Playbook ---- */
+const PLAYBOOK=[
+ {sec:"Buying: what we buy and how value is set",items:[
+  {t:"The one rule that outranks everything",b:"MAX Face is the ceiling. Negotiate up toward it, never above it. If the customer wants more than MAX Face, you do not break the ceiling, you pivot to consignment and move the lead to Sent to Consignment."},
+  {t:"Where the numbers come from",b:"Metal MAX Face is driven by spot, which updates through the day. Always price off the current deal sheet. Never quote metal from memory and never price from an old screenshot. Work on the CALCULATOR tab only, and never alter the Show Totals and Profit page."},
+  {t:"How MAX Face is built",b:"Every coin category has a Times Face multiplier applied to face value, and the hard cap is MAX Face equals Times Face multiplied by 3.33333. That cap is what guarantees the margin. The calculator does this math for you, which is why you use it at the table instead of doing it in your head."},
+  {t:"Amount column",b:"Enter the count for coins. Enter the weight in pennyweight (DWT) for gold, silver, and platinum."},
+  {t:"Offer, Total Value, and your room",b:"Offer is the sum of your rows and the number you present. Total Value is everything at MAX Face. The gap between them is your negotiating room."},
+  {t:"Opening offer",b:"About 30 percent is the MINIMUM first offer for a seller who does not know what they have. It is a floor, not a default. Open higher for a knowledgeable or sharp seller. Lowballing a sharp seller kills the deal, and overpaying a soft one kills the margin."},
+  {t:"Silver by era",b:"Dimes, quarters, and halves 1964 and earlier are 90 percent silver. Kennedy halves 1965 to 1970 are 40 percent. Jefferson war nickels 1942 to 1945 are 35 percent. Regular nickels have no silver. Silver dollars 1935 and earlier are 90 percent."},
+  {t:"Gold karat stamps",b:"10K is 417, 14K is 585, 18K is 750, 22K is 916, 24K is 999. Reject GF, GP, HGE, RGP, EPNS, and 1/10 or 1/20 marks: those are plated or filled with little to no melt value."},
+  {t:"Sterling and platinum",b:"Sterling is marked .925, Sterling, or Ster. Platinum is marked PT, Plat, Platinum, or 950."},
+  {t:"What we buy",b:"Gold, silver, and platinum in any condition including broken jewelry. Bullion coins, bars, and rounds. Pre-1965 silver coins, key dates, pre-1933 US gold. Sterling flatware and serving pieces. Luxury and solid gold watches, running or not. Qualifying diamonds. Vintage comics 1938 to 1970. Vintage cards."},
+  {t:"What we do not buy",b:"Plated or filled metal, costume jewelry, modern clad coins, fashion watches and smartwatches (unless the case is solid gold)."},
+  {t:"Key dates to flag, never melt",b:"CC (Carson City) anything, especially Morgans. 1909-S VDB and 1914-D cents. 1916-D Mercury dime. 1932-D and 1932-S quarters. 1893-S and 1889-CC Morgans. 1913 and 1885 Liberty nickels. Early or unusual coins: large cents, Flying Eagle and Indian Head cents, two and three cent pieces, half dimes, twenty-cent pieces. Set it aside and route it."},
+  {t:"Fakes",b:"A real silver dollar weighs about 26.7 grams. Noticeably light means likely fake. On cards, bad print, wrong texture, or off weight means route it."},
+  {t:"Pricing anything not on the sheet",b:"Raw items price from eBay sold and completed listings, auction format, recently ended, similar condition. Active and Buy It Now listings are asking prices and do not count. Graded items price from CDN Greysheet wholesale for the date and grade on the label. Post the finding to the pricing channel. Never guess."},
+ ]},
+ {sec:"Testing and triage",items:[
+  {t:"Test order",b:"Magnet first, then scratch on jewelry only, then scale. Real gold, silver, and platinum are not magnetic. Test the chain or band, not the clasp, because clasps hold steel springs."},
+  {t:"Never acid-test a coin",b:"Acid permanently destroys collector value. Jewelry only."},
+  {t:"Silver scratch read",b:"Creamy or milky means real sterling. Green or fizzing means plated."},
+  {t:"The scale",b:"Zero it before every batch. Pay for metal only. Deduct for stones, and for a watch's movement and glass."},
+  {t:"Triage the pile first",b:"Sort into three piles before careful testing: Buy, Route or look up, Reject or bulk. Stamps first on jewelry, magnet as the fast screen. Careful testing happens only on Buy and Route. Weigh costume by the pound. An early coin must never land in Reject."},
+  {t:"Watches",b:"Pocket watch jewels: 7 is a starter, 15 to 20 is mid level, 21 and up is high end. A solid gold case is bought for melt regardless of brand, deducting movement and glass. Route vintage or uncertain high-end watches."},
+  {t:"Diamonds",b:"The 4 Cs: Carat, Cut, Color (best at D), Clarity (best near Flawless). Handle small accent stones in the jewelry deal. Route any loose, half-carat-and-up, or certified diamond to the specialist."},
+ ]},
+ {sec:"The phone: 3A framework",items:[
+  {t:"3A, in order",b:"Acknowledge, Associate, Ask. Use it on every objection."},
+  {t:"Open the call",b:"Your name and company, confirm they still want to come in, and listen for high-value trigger words like gold and large amounts of silver."},
+  {t:"Never give a number on the phone",b:"Not even a range. Get a photo and book the appointment. This is the rule that protects every deal."},
+  {t:"Route the caller",b:"Standard items: send photos to your line. High-value items: go straight to scheduling."},
+  {t:"Close with two times",b:"Offer two specific time options, never whenever works for you. Removing open choice raises the show rate."},
+  {t:"Push twice, then give a range",b:"When they push hard for a number, hold twice. Only then give a range, never a firm figure."},
+ ]},
+ {sec:"The table: Show Sales Framework (10 steps)",items:[
+  {t:"The shape",b:"Ten steps, from clarify why they came in through get their information before they leave. Much of the decision forms in the first minute: greet by name, build rapport, avoid politics and religion."},
+  {t:"Qualify before you price",b:"Ask all of it before any number: what brought you in, are you looking to take care of this today, anything you are putting the money toward, whose collection is this, have you sold anything like this before, any other offers, what do you think it is all worth, how did you arrive at that, when did you last check values, sentimental or ready to move, how far did you come in."},
+  {t:"What the reads are for",b:"Urgency and use of funds weigh highest. Their expectation number tells you where to open. Far drive means committed, so you do not need to stretch. High attachment means lead with empathy, not price."},
+  {t:"Evaluate in the open",b:"Run the evaluation where the customer can see it and state your pricing source. Transparency is what closes the deal."},
+  {t:"Deliver and go quiet",b:"State the offer with calm certainty, then stop talking. Talking past your own number weakens it."},
+  {t:"The assumptive close",b:"Your total comes out to this, all I need is your ID and I can get you paid. Then clear the table: ID, check, transaction sheet, photo, referral."},
+  {t:"Objections",b:"Handle each with its matched response, not a discount, then return to the close. Use Feel, Felt, Found for emotional objections. Never confirm or deny their online number, show the work instead. Most lost deals are not lost on price."},
+ ]},
+ {sec:"Consignment: when and how",items:[
+  {t:"What it is",b:"We sell the item for the customer at auction instead of buying it. The customer keeps ownership until it sells, and the final price is set by bidding."},
+  {t:"When to pitch it",b:"When the customer wants more than MAX Face, when the item is rare or high value, or when the lead already wants auction. Present cash first, then consignment."},
+  {t:"How to frame it",b:"Collectors compete for the item. We handle photography, listing, and buyers. Set expectations honestly: price depends on bidding and it takes time. Never overpromise a final price."},
+  {t:"The fee",b:"Our fee comes from the sale. Pitch the 10 percent, waived over 100k. Exact terms are in the agreement and are set by leadership."},
+  {t:"Max-value and whale transfer",b:"On a max-value lot or anything over 100k, pitch consignment first, hype the auction upside, and warm-transfer to Jason in the room with a referral."},
+  {t:"Setting it up",b:"Itemize, sign the agreement, tag and store securely, and move the lead to Sent to Consignment."},
+ ]},
+ {sec:"Escalation and authority",items:[
+  {t:"Three triggers, three actions",b:"Unsure of anything: get a second opinion before committing. No set price: look it up before pricing. A 2500-plus total-value deal about to walk: get a manager or another closer before it leaves."},
+  {t:"Where a second opinion comes from",b:"Another closer, the Collectors Slack channel, or the sales manager. Never a guess."},
+  {t:"After escalation",b:"If it still will not close, pivot to consignment. You never exceed MAX Face."},
+  {t:"Standing rules",b:"Route rare or significant items to the specialist regardless of size. If a customer turns threatening, stop selling, disengage, get a manager or security, and document it."},
+ ]},
+ {sec:"The CRM and the paperwork",items:[
+  {t:"Every arrival becomes a lead",b:"Sign them in and check the CRM before touching the items. Open the existing lead or create one on the spot with name, phone, and what they brought. A logged no-buy is a future follow-up. An unlogged walk-in is gone forever."},
+  {t:"Close the loop",b:"After the appointment, set the stage to the real outcome: bought, sent to consignment, low value, junk, lost."},
+  {t:"The check",b:"Write it only after the deal is agreed and items are verified, for the exact agreed offer, payable to the name on the ID. Amount in numbers and in words. Record the check number on the Final Count immediately. Wrong amount or name: void and rewrite, then record the new number."},
+  {t:"Final Count",b:"Log each deal right after it closes: name, check number, amount spent, counts by category. Not from memory at the end of the day. Checks written and total spent must line up before you leave."},
+ ]},
+ {sec:"Your pay and what you are measured on",items:[
+  {t:"Buyers and salesmen",b:"20 percent commission on the net profit of your deals. Net profit is what is left after the costs attached to the deal, not the gross. That is why what you pay at the table is what drives your check."},
+  {t:"Consignment referrals",b:"Referrers earn 2 percent of the hammer or settlement price. If two people legitimately co-refer a deal, each receives 2 percent."},
+  {t:"Cash first, then consignment",b:"Present the cash offer first. Consignment is the pivot when cash cannot get there, not the opening move."},
+  {t:"What you are measured on",b:"Close rate on your appointments, margin health (deals inside the pricing rules), a review captured on every closed deal, no rule or pricing issues, and clean audit-ready records."},
+  {t:"Reviews",b:"Ask in person on every closed deal. Reviews are a gate on the business, not a nice-to-have."},
+ ]}
+];
+let PBQ='';
+function renderPlaybook(){
+  const q=PBQ.trim().toLowerCase();
+  let hits=0;
+  const blocks=PLAYBOOK.map(g=>{
+    const items=g.items.filter(it=>!q||(it.t+' '+it.b).toLowerCase().indexOf(q)!==-1);
+    if(!items.length)return '';
+    hits+=items.length;
+    return `<h2 style="font-family:'Fraunces';font-size:18px;margin:22px 0 8px;color:var(--gold-bright)">${esc(g.sec)}</h2>`+
+      items.map(it=>`<div class="standard" style="margin-top:0;margin-bottom:10px"><b>${esc(it.t)}</b><div style="margin-top:6px">${esc(it.b)}</div></div>`).join('');
+  }).join('');
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">Quick reference, use it at the table</div><h1>Playbook</h1></div>
+    <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+    <input id="pbq" class="dinput" style="width:100%;box-sizing:border-box;margin-bottom:6px" placeholder="Search the playbook, for example: war nickel, magnet, consignment fee, escalation" value="${esc(PBQ)}" oninput="pbSearch(this.value)">
+    <div class="lesson-note" style="margin:2px 2px 10px">${q?hits+' result'+(hits===1?'':'s'):'Everything below is the rule as taught. Live prices are never in here: always price off the current deal sheet.'}</div>
+    ${blocks||'<div class="standard">Nothing matches that. Try a shorter word.</div>'}</div>`;
+  window.scrollTo(0,0);
+  const el=document.getElementById('pbq');if(el&&q){el.focus();try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}
+}
+function pbSearch(v){PBQ=v;renderPlaybook();}
+
+/* ---- Best Calls ---- */
+const BEST_STORE='sa_bestcalls_v1', BEST_MIN=90, BEST_MAX=60;
+function getBest(){const a=load(BEST_STORE,[]);return Array.isArray(a)?a:[];}
+function saveBest(a){save(BEST_STORE,a);}
+function bestAdd(entry){
+  if(previewMode)return;
+  const a=getBest();
+  a.unshift(entry);
+  const pinned=a.filter(x=>x.pinned), rest=a.filter(x=>!x.pinned);
+  const trimmed=pinned.concat(rest).slice(0,BEST_MAX);
+  saveBest(trimmed);
+}
+function bestPin(id){const a=getBest();const e=a.find(x=>x.id===id);if(!e)return;
+  const code=prompt('Manager passcode to pin this example:');if(code===null)return;
+  if(code!==getMgrPass()&&code!==getAdminPass()){alert('Incorrect passcode.');return;}
+  e.pinned=!e.pinned;if(!e.pinned)e.note='';saveBest(a);renderBest();}
+function bestNote(id){const a=getBest();const e=a.find(x=>x.id===id);if(!e)return;
+  const code=prompt('Manager passcode to add a coach note:');if(code===null)return;
+  if(code!==getMgrPass()&&code!==getAdminPass()){alert('Incorrect passcode.');return;}
+  const n=prompt('Coach note, why this one won:',e.note||'');if(n===null)return;
+  e.note=n.trim();if(e.note)e.pinned=true;saveBest(a);renderBest();}
+function bestDelete(id){const a=getBest();const e=a.find(x=>x.id===id);if(!e)return;
+  const code=prompt('Manager passcode to remove this example:');if(code===null)return;
+  if(code!==getMgrPass()&&code!==getAdminPass()){alert('Incorrect passcode.');return;}
+  if(!confirm('Remove this example?'))return;
+  saveBest(getBest().filter(x=>x.id!==id));renderBest();}
+function renderBest(){
+  const a=getBest();
+  const pinned=a.filter(x=>x.pinned), rest=a.filter(x=>!x.pinned);
+  const card=e=>{
+    const when=new Date(e.ts).toLocaleDateString();
+    const kind=e.kind==='explain'?'Explain':'Call';
+    return `<div class="standard" style="margin-top:0;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><b>${esc(e.title)}</b> <span class="pill pill-g">${e.score}</span> ${e.pinned?'<span class="pill pill-a">pinned</span>':''}
+          <div class="lesson-note">${kind} by ${esc(e.who)} on ${when}${e.persona?', customer: '+esc(e.persona):''}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="bestPin('${e.id}')">${e.pinned?'Unpin':'Pin'}</button>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="bestNote('${e.id}')">${e.note?'Edit note':'Add note'}</button>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="bestDelete('${e.id}')">Remove</button>
+        </div></div>
+      ${e.note?`<div class="dmodel" style="margin-top:10px"><b>Coach's note:</b> ${esc(e.note)}</div>`:''}
+      <details style="margin-top:10px"><summary style="cursor:pointer;color:var(--gold-bright)">Read the transcript</summary>
+        <div style="white-space:pre-wrap;margin-top:8px;font-size:14px;line-height:1.6">${esc(e.transcript)}</div></details></div>`;
+  };
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">Learn from the team's best</div><h1>Best Calls</h1></div>
+    <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+    <div class="passbar">Any drill scoring ${BEST_MIN} or higher saves here automatically, with its transcript. Everyone can read them. Managers can pin the strongest and add a coach note.</div>
+    ${a.length?'':'<div class="standard">Nothing saved yet. Score '+BEST_MIN+' or higher on any drill and it lands here.</div>'}
+    ${pinned.length?`<h2 style="font-family:'Fraunces';font-size:18px;margin:20px 0 8px;color:var(--gold-bright)">Pinned by a manager</h2>${pinned.map(card).join('')}`:''}
+    ${rest.length?`<h2 style="font-family:'Fraunces';font-size:18px;margin:20px 0 8px;color:var(--gold-bright)">Recent</h2>${rest.map(card).join('')}`:''}</div>`;
+  window.scrollTo(0,0);
+}
 function drillEnd(){
   const s=drillState;if(!s)return;
   const repTurns=s.msgs.filter(m=>m.who==='rep').length;
@@ -1143,16 +1451,26 @@ function logDrill(id,r,focused){
   if(previewMode)return;
   const p=currentProgress();if(!p)return;
   p.drills=p.drills||{};const sc=Math.max(0,Math.min(100,Number(r.score)||0));
-  const d=p.drills[id]||{best:0,attempts:0,focusedAttempts:0,last:0,beatStats:{}};
-  d.beatStats=d.beatStats||{};
+  const d=p.drills[id]||{best:0,attempts:0,focusedAttempts:0,last:0,beatStats:{},passed:[]};
+  d.beatStats=d.beatStats||{};d.passed=Array.isArray(d.passed)?d.passed:[];
   (Array.isArray(r.beats)?r.beats:[]).forEach(b=>{
     if(!b||!b.key)return;const bs=d.beatStats[b.key]||{hit:0,total:0};bs.total++;
     const v=(b.status==='hit')?1:(b.status==='partial')?0.5:(b.hit?1:0);bs.hit+=v;d.beatStats[b.key]=bs;
   });
   if(focused){d.focusedAttempts=(d.focusedAttempts||0)+1;}
-  else{d.attempts=(d.attempts||0)+1;d.best=Math.max(d.best||0,sc);d.last=sc;d.lastAt=Date.now();}
+  else{
+    d.attempts=(d.attempts||0)+1;d.best=Math.max(d.best||0,sc);d.last=sc;d.lastAt=Date.now();
+    const q=drillQuota(id);
+    const pname=(drillState&&drillState.persona&&drillState.persona.name)?drillState.persona.name:'';
+    if(pname&&sc>=q.score&&d.passed.indexOf(pname)===-1)d.passed.push(pname);
+    if(sc>=BEST_MIN&&drillState){
+      const {mod}=findModule(id);
+      bestAdd({id:'b'+Date.now()+Math.floor(Math.random()*1000),kind:'call',score:sc,who:currentName()||'Trainee',
+        title:(mod?mod.name:id),persona:pname,transcript:drillTranscript(drillState),ts:Date.now(),pinned:false,note:''});
+    }
+  }
   p.drills[id]=d;
-  p.log=p.log||[];p.log.push({type:'drill',id,score:sc,focused:!!focused,ts:Date.now()});
+  p.log=p.log||[];p.log.push({type:'drill',id,score:sc,focused:!!focused,persona:(drillState&&drillState.persona)?drillState.persona.name:'',ts:Date.now()});
   p.lastActivity=Date.now();persist(p);
 }
 function weakestBeat(p,id){
@@ -1161,10 +1479,11 @@ function weakestBeat(p,id){
   rub.beats.forEach(b=>{const s=stats[b.key];if(s&&s.total>=2){const ratio=s.hit/s.total;if(!worst||ratio<worst.ratio)worst={key:b.key,label:b.label,ratio};}});
   return (worst&&worst.ratio<1)?worst:null;
 }
-function quotaMet(p,id){const q=drillQuota(id);const d=(p.drills&&p.drills[id])?p.drills[id]:null;return !!(d&&d.attempts>=q.reps&&d.best>=q.score);}
-function quotaLine(p,id){const q=drillQuota(id);const d=(p.drills&&p.drills[id])?p.drills[id]:{attempts:0,best:0};
+function drillPassed(p,id){const d=(p&&p.drills&&p.drills[id])?p.drills[id]:null;return (d&&Array.isArray(d.passed))?d.passed:[];}
+function quotaMet(p,id){const q=drillQuota(id);const need=Math.min(q.personas,modulePersonas(id).length);return drillPassed(p,id).length>=need;}
+function quotaLine(p,id){const q=drillQuota(id);const need=Math.min(q.personas,modulePersonas(id).length);const n=drillPassed(p,id).length;
   const met=quotaMet(p,id);
-  return `${met?'<span class="pill pill-g">quota met</span>':'<span class="pill pill-l">quota not met</span>'} ${d.attempts||0} of ${q.reps} full reps, best ${d.best||0} (target ${q.score})`;}
+  return `${met?'<span class="pill pill-g">quota met</span>':'<span class="pill pill-l">quota not met</span>'} ${n} of ${need} different customers passed at ${q.score} or higher`;}
 function renderDrillScore(r){
   const s=drillState;const sc=Math.max(0,Math.min(100,Number(r.score)||0));
   const beats=Array.isArray(r.beats)?r.beats:[];
@@ -1221,7 +1540,7 @@ function renderExplain(){
   app.innerHTML=`<div class="fade">
     <div class="admin-head"><div><div class="crumb">${esc(tier.name)} ${previewMode?'(preview)':''}</div><h1>Explain: ${esc(mod.name)}</h1></div>
     <button class="btn btn-ghost" onclick="explainExit()">Back to module</button></div>
-    <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}Pass ${EXPLAIN_QUOTA} different questions at ${explainPass()} or higher. ${count} of ${EXPLAIN_QUOTA} passed.</div>
+    <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}Pass ${explainQuotaFor(s.id)} different questions at ${explainPass(s.id)} or higher. ${count} of ${explainQuotaFor(s.id)} passed.</div>
     <div class="standard" style="margin-top:0"><b>Your question</b><br>${esc(s.data.prompts[s.idx])}</div>
     <div class="lesson-note" style="margin:8px 2px">Explain it in your own words. Plain language is fine; you do not need the exact wording.</div>
     <textarea id="einput" rows="6" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font:inherit" placeholder="Speak or type your explanation here..."></textarea>
@@ -1264,16 +1583,21 @@ function explainSubmit(){
   if(!ans){const ee=document.getElementById('eerr');if(ee)ee.textContent='Say or type your explanation before submitting.';return;}
   s.busy=true;app.innerHTML=`<div class="fade"><h1>Checking your explanation...</h1><div class="standard">Grading what you said against the key points.</div></div>`;
   drillAPI('knowledge',{points:s.data.points,concept:s.data.concept,question:s.data.prompts[s.idx],answer:ans})
-    .then(r=>{const sc=explainScore(r.points);logExplain(s.id,s.idx,sc);renderExplainScore(r,sc);})
+    .then(r=>{const sc=explainScore(r.points);logExplain(s.id,s.idx,sc,ans);renderExplainScore(r,sc);})
     .catch(err=>{s.busy=false;app.innerHTML=`<div class="fade"><h1>Check failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderExplain()">Back to the question</button></div>`;});
 }
-function logExplain(id,idx,sc){
+function logExplain(id,idx,sc,answer){
   if(previewMode)return;const p=currentProgress();if(!p)return;
   p.explain=p.explain||{};const e=p.explain[id]||{passed:[],attempts:0,best:0};
   e.passed=Array.isArray(e.passed)?e.passed:[];e.attempts=(e.attempts||0)+1;e.best=Math.max(e.best||0,sc);
-  if(sc>=explainPass()&&e.passed.indexOf(idx)===-1)e.passed.push(idx);
+  if(sc>=explainPass(id)&&e.passed.indexOf(idx)===-1)e.passed.push(idx);
   p.explain[id]=e;p.log=p.log||[];p.log.push({type:'explain',id,idx,score:sc,ts:Date.now()});
   p.lastActivity=Date.now();persist(p);
+  if(sc>=BEST_MIN&&answer&&EXPLAIN[id]){
+    const {mod}=findModule(id);
+    bestAdd({id:'b'+Date.now()+Math.floor(Math.random()*1000),kind:'explain',score:sc,who:currentName()||'Trainee',
+      title:(mod?mod.name:id),persona:'',transcript:'Question: '+EXPLAIN[id].prompts[idx]+'\n\nAnswer: '+answer,ts:Date.now(),pinned:false,note:''});
+  }
 }
 function renderExplainScore(r,sc){
   const s=explainState;s.busy=false;
@@ -1285,12 +1609,12 @@ function renderExplainScore(r,sc){
     const better=(st!=='hit'&&pt.better)?`<div class="dmodel"><b>Stronger answer:</b> ${esc(pt.better)}</div>`:'';
     return `<tr><td style="width:64px">${pill}</td><td>${esc(pt.point)}${said}${better}</td></tr>`;
   }).join('');
-  const passed=sc>=explainPass();
+  const passed=sc>=explainPass(s.id);
   const p=previewMode?null:currentProgress();const count=explainPassedIdx(p,s.id).length;
-  const ring=sc>=explainPass()?'#7fd3a5':(sc>=60?'#d9b84a':'#e0a06a');
-  const done=count>=EXPLAIN_QUOTA;
+  const ring=sc>=explainPass(s.id)?'#7fd3a5':(sc>=60?'#d9b84a':'#e0a06a');
+  const done=count>=explainQuotaFor(s.id);
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>Explanation Scored</h1><button class="btn btn-gold" onclick="explainExit()">Back to module</button></div>
-    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${passed?'Passed this question':'Not yet, you need '+explainPass()}</div><div class="lesson-note">${done?'Explain drill complete for this module.':count+' of '+EXPLAIN_QUOTA+' different questions passed'}</div></div></div>
+    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${passed?'Passed this question':'Not yet, you need '+explainPass(s.id)}</div><div class="lesson-note">${done?'Explain drill complete for this module.':count+' of '+explainQuotaFor(s.id)+' different questions passed'}</div></div></div>
     ${r.note?`<div class="standard"><b>Coach's note:</b> ${esc(r.note)}</div>`:''}
     <div class="table-wrap"><table>${rows}</table></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
@@ -1343,25 +1667,27 @@ function openModule(id){
   const isCoin=(id==='m2.1');
   const explainOn=hasExplain(id), exDone=explainCleared(p,id), exCount=explainPassedIdx(p,id).length, testPassed=isTestPassed(p,id);
   const note=st==='awaiting'?`<div class="standard" style="margin-top:0"><b>Awaiting manager sign-off</b><br>You passed the written test and the explain drill for this module. It now needs a short one-on-one with a manager, who will sign it off by name. The next module unlocks once that sign-off is recorded.</div>`
-    :(testPassed&&explainOn&&!exDone?`<div class="standard" style="margin-top:0"><b>Test passed. One step left before sign-off.</b><br>Finish the explain drill below (${exCount} of ${EXPLAIN_QUOTA} questions passed). The module is ready for a manager once you have explained it in your own words.</div>`:'');
+    :(testPassed&&explainOn&&!exDone?`<div class="standard" style="margin-top:0"><b>Test passed. One step left before sign-off.</b><br>Finish the explain drill below (${exCount} of ${explainQuotaFor(id)} questions passed). The module is ready for a manager once you have explained it in your own words.</div>`:'');
   let practicePanel='';
   if(moduleDrill(id)){
     const weak=weakestBeat(p,id);
     const q=drillQuota(id);
     practicePanel=`<div class="standard"><b>AI practice</b><br>
-      Hit the practice bar before sign-off: ${q.reps} full calls scoring ${q.score} or higher. ${quotaLine(p,id)}.
+      Hit the practice bar before sign-off: ${Math.min(q.personas,modulePersonas(id).length)} different customers scoring ${q.score} or higher. ${quotaLine(p,id)}.
+      ${drillReady()?'':'<div class="lesson-note" style="color:#e0a06a;margin-top:8px">The practice server is not connected, so live drills cannot run yet.</div>'}
       ${weak?`<div class="dmodel" style="margin-top:10px"><b>Your weakest skill:</b> ${esc(weak.label)}. <button class="btn btn-ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="startBeatDrill('${id}','${weak.key}')">Drill just this</button></div>`:''}</div>`;
   }
   let explainPanel='';
   if(explainOn){
     explainPanel=`<div class="standard"><b>Explain it out loud</b><br>
-      Pass ${EXPLAIN_QUOTA} different explain questions at ${explainPass()} or higher to be ready for sign-off. You explain the idea in your own words, by voice or typing, and the coach grades it. ${exDone?'<span class="pill pill-g">explain complete</span>':`<span class="pill pill-l">${exCount} of ${EXPLAIN_QUOTA} passed</span>`}
-      <div style="margin-top:10px"><button class="btn btn-gold" onclick="startExplain('${id}')">${exCount>0?'Continue explain drill':'Start explain drill'}</button></div></div>`;
+      Pass ${explainQuotaFor(id)} different explain questions at ${explainPass(id)} or higher to be ready for sign-off. You explain the idea in your own words, by voice or typing, and the coach grades it. ${exDone?'<span class="pill pill-g">explain complete</span>':`<span class="pill pill-l">${exCount} of ${explainQuotaFor(id)} passed</span>`}
+      ${drillReady()?'':'<div class="lesson-note" style="color:#e0a06a;margin-top:8px">The practice server is not connected, so the explain drill cannot run yet. Everything else on this module still works. Ask an administrator to connect it in Administrator settings.</div>'}
+      <div style="margin-top:10px"><button class="btn ${drillReady()?'btn-gold':'btn-ghost'}" onclick="startExplain('${id}')">${exCount>0?'Continue explain drill':'Start explain drill'}</button></div></div>`;
   }
   app.innerHTML=`<div class="lesson fade">
     <div class="crumb">${tier.name}</div>
     <h1>${mod.name}</h1>
-    <div class="sub">Read the briefing, then take the test. You need ${mod.passMark}% to clear the gate, then a manager sign-off to advance.</div>
+    <div class="sub">Read the briefing, then take the test. You need ${passMarkFor(id)}% to clear the gate, then a manager sign-off to advance.</div>
     ${note}
     <div class="lesson-card">${mod.lessonHTML}</div>
     ${practicePanel}
@@ -1383,7 +1709,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 function startTest(id,practice){
   const {tier,mod}=findModule(id);
   const questions=buildModuleQuestions(mod);
-  TEST={kind:'module',moduleId:id,tier,mod,practice:!!practice,hard:false,questions,optOrders:questions.map(()=>shuffle([0,1,2,3])),passMark:mod.passMark,title:mod.name,answers:{},submitted:false};
+  TEST={kind:'module',moduleId:id,tier,mod,practice:!!practice,hard:false,questions,optOrders:questions.map(()=>shuffle([0,1,2,3])),passMark:passMarkFor(id),title:mod.name,answers:{},submitted:false};
   renderTest();
 }
 function startFinal(tid){
@@ -1396,24 +1722,96 @@ function startFinal(tid){
 }
 function renderTest(){
   const {questions,answers,passMark,title,practice,kind}=TEST;const n=questions.length;const need=Math.ceil(passMark/100*n);
-  let html=`<div class="fade"><div class="test-head"><h1>${title}${kind==='final'?'':', Test'}</h1><span class="qcount">${n} questions</span></div>
-    <div class="passbar">${practice?'Practice mode: this attempt is not recorded. ':''}${TEST.hard?'This is the harder set, including situational questions. ':''}You need ${passMark}% (${need} of ${n})${kind==='final'?' to complete the tier':' to advance'}. Answer every question.</div>`;
+  const isQuiz=kind==='quiz';
+  let html=`<div class="fade"><div class="test-head"><h1>${title}${(kind==='final'||isQuiz)?'':', Test'}</h1><span class="qcount">${n} questions${isQuiz?' <b id="quiztimer" style="margin-left:10px"></b>':''}</span></div>
+    <div class="passbar">${isQuiz?'Study only, this is not recorded. The quiz auto-submits when the timer runs out, and scores whatever you have answered.':`${practice?'Practice mode: this attempt is not recorded. ':''}${TEST.hard?'This is the harder set, including situational questions. ':''}You need ${passMark}% (${need} of ${n})${kind==='final'?' to complete the tier':' to advance'}. Answer every question.`}</div>`;
   questions.forEach((q,pos)=>{const oo=TEST.optOrders[pos];
-    html+=`<div class="q" id="q${pos}"><div class="q-num">Question ${pos+1}</div><div class="q-text">${q.q}</div>`;
+    html+=`<div class="q" id="q${pos}"><div class="q-num">Question ${pos+1}${isQuiz&&q.__mname?' <span class="lesson-note">'+esc(q.__mname)+'</span>':''}${scenarioTag(q)}</div><div class="q-text">${q.q}</div>`;
     oo.forEach((origIdx,slot)=>{html+=`<div class="opt ${answers[pos]===origIdx?'sel':''}" data-orig="${origIdx}" onclick="pick(${pos},${origIdx})"><div class="mark">${'ABCD'[slot]}</div><div class="otext">${q.o[origIdx]}</div></div>`;});
     html+=`</div>`;});
-  const backBtn=kind==='module'?`<button class="btn btn-ghost" onclick="openModule('${TEST.moduleId}')">Back to briefing</button>`:`<button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>`;
+  const backBtn=kind==='module'?`<button class="btn btn-ghost" onclick="openModule('${TEST.moduleId}')">Back to briefing</button>`:(isQuiz?`<button class="btn btn-ghost" onclick="quizQuit()">Quit quiz</button>`:`<button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>`);
   html+=`<div class="lesson-actions">${backBtn}<button class="btn btn-gold" onclick="submitTest()">Submit</button></div></div>`;
   app.innerHTML=html;window.scrollTo(0,0);
 }
+function quizQuit(){stopQuizTimer();TEST={};renderQuizSetup();}
 function pick(pos,origIdx){if(TEST.submitted)return;TEST.answers[pos]=origIdx;const qEl=document.getElementById('q'+pos);qEl.querySelectorAll('.opt').forEach(el=>el.classList.toggle('sel',Number(el.dataset.orig)===origIdx));}
+
+/* ---- Quiz tab (study only) ---- */
+const QUIZ_SECS_PER_Q=45;
+let QUIZSEL={mods:{},len:20,fresh:false}, quizTimer=null;
+function teachingModules(){const out=[];CURRICULUM.forEach(t=>t.modules.forEach(m=>{if(Array.isArray(m.test)&&m.test.length)out.push({tier:t,mod:m});}));return out;}
+function renderQuizSetup(){
+  const list=teachingModules();
+  const byTier={};list.forEach(x=>{(byTier[x.tier.id]=byTier[x.tier.id]||{tier:x.tier,mods:[]}).mods.push(x.mod);});
+  let blocks='';
+  Object.keys(byTier).forEach(tid=>{
+    const g=byTier[tid];
+    blocks+=`<div class="standard" style="margin-top:0;margin-bottom:12px"><b>${esc(g.tier.name)}</b><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">`;
+    g.mods.forEach(m=>{blocks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-qm="${m.id}" ${QUIZSEL.mods[m.id]?'checked':''} onchange="quizToggle('${m.id}',this.checked)"><span>${esc(m.name)} <span class="lesson-note">(${m.test.length})</span></span></label>`;});
+    blocks+=`</div></div>`;
+  });
+  const nSel=Object.keys(QUIZSEL.mods).filter(k=>QUIZSEL.mods[k]).length;
+  const pool=quizPool().length;
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">Study only, never affects certification</div><h1>Quiz</h1></div>
+    <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+    <div class="passbar">Build your own quiz from any chapters. Timed at ${QUIZ_SECS_PER_Q} seconds per question. Every answer shows why.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 2px">
+      <button class="btn btn-ghost" onclick="quizAll(true)">Select all</button>
+      <button class="btn btn-ghost" onclick="quizAll(false)">Clear</button>
+    </div>
+    ${blocks}
+    <div class="standard" style="margin-top:0"><b>Length</b><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+      ${[10,20,30].map(n=>`<button class="btn ${QUIZSEL.len===n?'btn-gold':'btn-ghost'}" onclick="quizLen(${n})">${n} questions</button>`).join('')}</div>
+      <div class="lesson-note" style="margin-top:8px">${nSel} chapter${nSel===1?'':'s'} selected, ${pool} questions available.</div></div>
+    <div class="lesson-actions"><button class="btn btn-gold" onclick="startQuiz()">Start quiz</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function quizToggle(id,on){QUIZSEL.mods[id]=!!on;renderQuizSetup();}
+function quizAll(on){const list=teachingModules();QUIZSEL.mods={};if(on)list.forEach(x=>{QUIZSEL.mods[x.mod.id]=true;});renderQuizSetup();}
+function quizLen(n){QUIZSEL.len=n;renderQuizSetup();}
+function quizPool(){
+  const ids=Object.keys(QUIZSEL.mods).filter(k=>QUIZSEL.mods[k]);
+  const pool=[];
+  teachingModules().forEach(x=>{if(ids.indexOf(x.mod.id)!==-1)(x.mod.test||[]).forEach(q=>pool.push(Object.assign({},q,{__mid:x.mod.id,__mname:x.mod.name})));});
+  return pool;
+}
+function startQuiz(){
+  const pool=quizPool();
+  if(!pool.length){alert('Pick at least one chapter first.');return;}
+  const n=Math.min(QUIZSEL.len,pool.length);
+  const questions=shuffle(pool).slice(0,n);
+  TEST={kind:'quiz',practice:true,hard:false,questions,optOrders:questions.map(()=>shuffle([0,1,2,3])),passMark:0,title:'Custom Quiz',answers:{},submitted:false,
+    endsAt:Date.now()+n*QUIZ_SECS_PER_Q*1000,warned:false};
+  renderTest();startQuizTimer();
+}
+function stopQuizTimer(){if(quizTimer){clearInterval(quizTimer);quizTimer=null;}}
+function startQuizTimer(){
+  stopQuizTimer();
+  quizTimer=setInterval(()=>{
+    if(!TEST||TEST.kind!=='quiz'||TEST.submitted){stopQuizTimer();return;}
+    const left=Math.max(0,Math.round((TEST.endsAt-Date.now())/1000));
+    const el=document.getElementById('quiztimer');
+    if(el){const m=Math.floor(left/60),s=left%60;el.textContent='Time left '+m+':'+(s<10?'0':'')+s;el.style.color=left<=60?'#e08a78':'';}
+    if(left<=60&&!TEST.warned){TEST.warned=true;}
+    if(left<=0){stopQuizTimer();submitTest();}
+  },1000);
+}
+function quizBreakdown(){
+  const {questions,answers}=TEST;const by={};
+  questions.forEach((q,pos)=>{const k=q.__mname||'Other';const b=by[k]=by[k]||{right:0,total:0};b.total++;if(answers[pos]===q.a)b.right++;});
+  return Object.keys(by).map(k=>{const b=by[k];const pct=Math.round(b.right/b.total*100);
+    return `<tr><td>${esc(k)}</td><td style="width:110px">${b.right} of ${b.total}</td><td style="width:70px"><span class="pill ${pct>=80?'pill-g':(pct>=50?'pill-a':'pill-l')}">${pct}%</span></td></tr>`;}).join('');
+}
 function submitTest(){
   const {questions,answers,passMark,practice,kind}=TEST;const n=questions.length;
-  if(Object.keys(answers).length<n){const miss=[];questions.forEach((q,pos)=>{if(answers[pos]===undefined)miss.push(pos+1);});alert('Please answer every question. Missing: '+miss.join(', '));return;}
+  const isQuiz=kind==='quiz';
+  if(!isQuiz&&Object.keys(answers).length<n){const miss=[];questions.forEach((q,pos)=>{if(answers[pos]===undefined)miss.push(pos+1);});alert('Please answer every question. Missing: '+miss.join(', '));return;}
+  if(isQuiz)stopQuizTimer();
   let correct=0;questions.forEach((q,pos)=>{if(answers[pos]===q.a)correct++;});
   const pct=Math.round(correct/n*100);const passed=pct>=passMark;
   TEST.submitted=true;TEST.score=pct;TEST.correct=correct;TEST.passed=passed;
-  if(!practice){
+  if(!practice&&!isQuiz){
     const p=currentProgress();p.lastActivity=Date.now();
     if(kind==='module'){
       const rec=p.modules[TEST.moduleId]||{status:'available',best:0,attempts:0};
@@ -1430,6 +1828,19 @@ function submitTest(){
 }
 function renderResults(){
   const {passMark,correct,score,passed,questions,practice,kind,moduleId,tierId}=TEST;const n=questions.length;const need=Math.ceil(passMark/100*n);
+  if(kind==='quiz'){
+    const unanswered=n-Object.keys(TEST.answers).length;
+    app.innerHTML=`<div class="fade">
+      <div class="admin-head"><div><div class="crumb">Study only, not recorded</div><h1>Quiz Complete</h1></div>
+      <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+      <div class="dscorehead"><div class="dscorenum" style="color:${score>=80?'#7fd3a5':(score>=50?'#d9b84a':'#e0a06a')}">${score}%</div>
+        <div><div style="font-weight:700">${correct} of ${n} correct</div><div class="lesson-note">${unanswered?unanswered+' left unanswered when time ran out':'All questions answered'}</div></div></div>
+      <h2 style="font-family:'Fraunces';font-size:18px;margin:20px 0 8px;color:var(--gold-bright)">By chapter</h2>
+      <div class="table-wrap"><table>${quizBreakdown()}</table></div>
+      <div class="lesson-actions"><button class="btn btn-ghost" onclick="reviewTest()">Review answers</button>
+        <button class="btn btn-gold" onclick="renderQuizSetup()">New quiz</button></div></div>`;
+    window.scrollTo(0,0);return;
+  }
   const ring=passed?'var(--green)':'var(--red)';
   let body,actions;
   if(practice){
@@ -1457,7 +1868,7 @@ function reviewTest(){
   let html=`<div class="fade"><div class="test-head"><h1>${title}, Review</h1><span class="qcount">Score ${TEST.score}%</span></div>
     <div class="passbar">Correct answers in green, your wrong picks in red.</div>`;
   questions.forEach((q,pos)=>{const chosen=answers[pos];const oo=TEST.optOrders[pos];
-    html+=`<div class="q"><div class="q-num">Question ${pos+1}</div><div class="q-text">${q.q}</div>`;
+    html+=`<div class="q"><div class="q-num">Question ${pos+1}${scenarioTag(q)}</div><div class="q-text">${q.q}</div>`;
     oo.forEach((origIdx,slot)=>{let cls='';if(origIdx===q.a)cls='correct';else if(origIdx===chosen)cls='wrong';
       html+=`<div class="opt ${cls}"><div class="mark">${'ABCD'[slot]}</div><div class="otext">${q.o[origIdx]}</div></div>`;});
     html+=`<div class="explain"><b>Why:</b> ${q.e}</div></div>`;});
@@ -1608,6 +2019,104 @@ function traineeRowData(p){
 
 /* ---- admin ---- */
 function adminPrompt(){const pass=prompt('Administrator passcode:');if(pass===null)return;if(pass===getAdminPass())renderAdmin();else alert('Incorrect passcode.');}
+function saveLoc(){const el=document.getElementById('loc');if(!el)return;setLocation(el.value.trim());const s=document.getElementById('locsaved');if(s)s.textContent='Saved.';}
+function saveGateDefaults(){
+  const g=gatesAll();
+  const rd=(id,lo,hi)=>{const el=document.getElementById(id);if(!el)return null;const v=parseInt(el.value,10);return (v>=lo&&v<=hi)?v:null;};
+  const ep=rd('g_explainPass',50,100),eq=rd('g_explainQuota',1,7),dsc=rd('g_drillScore',50,100),dp=rd('g_drillPersonas',1,6);
+  const out=document.getElementById('gatesaved');
+  if(ep===null||eq===null||dsc===null||dp===null){if(out)out.textContent='Check the ranges.';return;}
+  g.def={explainPass:ep,explainQuota:eq,drillScore:dsc,drillPersonas:dp};saveGates(g);
+  if(out)out.textContent='Saved.';
+}
+function renderGateOv(){
+  const box=document.getElementById('gateov');if(!box)return;
+  const sel=document.getElementById('g_mod');
+  const id=(sel&&sel.value)?sel.value:(flatModules()[0]||{mod:{}}).mod.id;
+  const fm=id?findModule(id):null;
+  if(!fm||!fm.mod){box.innerHTML='<div class="lesson-note">Pick a module to set an override.</div>';return;}
+  const mod=fm.mod;
+  const g=gatesAll();const o=g.mods[id]||{};
+  const has=hasExplain(id), dr=!!moduleDrill(id);
+  box.innerHTML=`<div class="standard" style="margin-top:0">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Test pass mark (default ${mod.passMark})</label>
+      <input id="o_passMark" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${o.passMark!==undefined?o.passMark:''}" placeholder="default"></div>
+    ${has?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Explain pass mark (default ${g.def.explainPass})</label>
+      <input id="o_explainPass" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${o.explainPass!==undefined?o.explainPass:''}" placeholder="default"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Explain questions (default ${g.def.explainQuota})</label>
+      <input id="o_explainQuota" class="dinput" style="max-width:90px" type="number" min="1" max="7" value="${o.explainQuota!==undefined?o.explainQuota:''}" placeholder="default"></div>`:'<div class="lesson-note">No explain drill on this module.</div>'}
+    ${dr?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Roleplay pass score (default ${g.def.drillScore})</label>
+      <input id="o_drillScore" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${o.drillScore!==undefined?o.drillScore:''}" placeholder="default"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Different customers (default ${g.def.drillPersonas})</label>
+      <input id="o_drillPersonas" class="dinput" style="max-width:90px" type="number" min="1" max="6" value="${o.drillPersonas!==undefined?o.drillPersonas:''}" placeholder="default"></div>`:'<div class="lesson-note">No roleplay drill on this module.</div>'}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-gold" onclick="saveGateOv()">Save override</button>
+      <button class="btn btn-ghost" onclick="clearGateOv()">Clear override</button><span id="ovsaved" class="lesson-note"></span></div></div>`;
+}
+function saveGateOv(){
+  const sel=document.getElementById('g_mod');if(!sel||!sel.value)return;const id=sel.value;
+  if(!findModule(id))return;
+  const rd=(eid,lo,hi)=>{const el=document.getElementById(eid);if(!el)return undefined;const raw=String(el.value||'').trim();
+    if(raw==='')return null;const v=parseInt(raw,10);return (v>=lo&&v<=hi)?v:undefined;};
+  const pairs=[['passMark',rd('o_passMark',50,100)],['explainPass',rd('o_explainPass',50,100)],['explainQuota',rd('o_explainQuota',1,7)],['drillScore',rd('o_drillScore',50,100)],['drillPersonas',rd('o_drillPersonas',1,6)]];
+  const out=document.getElementById('ovsaved');
+  if(pairs.some(p=>p[1]===undefined&&document.getElementById('o_'+p[0]))){if(out)out.textContent='Check the ranges.';return;}
+  pairs.forEach(([k,v])=>{if(v!==undefined)setGateOverride(id,k,v);});
+  if(out)out.textContent='Saved.';renderGateOv();
+}
+function clearGateOv(){const sel=document.getElementById('g_mod');if(!sel||!sel.value)return;const id=sel.value;
+  const g=gatesAll();delete g.mods[id];saveGates(g);renderGateOv();
+  const out=document.getElementById('ovsaved');if(out)out.textContent='Override cleared.';}
+
+/* ---- Bulk unlock (admin only, access only, logged) ---- */
+const UNLOCK_LOG='sa_unlocklog_v1';
+function unlockLog(){const a=load(UNLOCK_LOG,[]);return Array.isArray(a)?a:[];}
+function renderUnlock(n){
+  const t=getTrainees();const p=normalize(t[n]);if(!p)return;
+  const status=computeStatus(p);
+  const rows=flatModules().map(x=>{
+    const st=status[x.mod.id];
+    const open=(p.unlocked&&p.unlocked[x.mod.id])?true:false;
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" data-ul="${x.mod.id}" ${open?'checked':''}>
+      <span>${esc(x.tier.n)}. ${esc(x.mod.name)} <span class="pill ${st==='certified'?'pill-g':(st==='awaiting'?'pill-a':'pill-l')}">${st}</span></span></label>`;
+  }).join('');
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">Administrator</div><h1>Open modules for ${esc(n)}</h1></div>
+    <button class="btn btn-ghost" onclick="renderDetail('${esc(n)}')">Back</button></div>
+    <div class="standard" style="margin-top:0"><b>This is access only.</b> Opening a module lets them read it and take the test early. It does not grant credit. They still must pass the test, clear the explain drill, and get a manager sign-off to certify. Every change here is logged.</div>
+    <div class="standard">${rows}</div>
+    <div class="lesson-actions"><button class="btn btn-gold" onclick="saveUnlock('${esc(n)}')">Save access</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function saveUnlock(n){
+  const t=getTrainees();const p=normalize(t[n]);if(!p)return;
+  const by=prompt('Your name, recorded on this access change:');if(by===null)return;
+  if(by.trim().length<2){alert('A name is required.');return;}
+  const boxes=document.querySelectorAll('[data-ul]');
+  const before=Object.assign({},p.unlocked||{});
+  const now={};
+  boxes.forEach(b=>{if(b.checked)now[b.dataset.ul]=true;});
+  const added=Object.keys(now).filter(k=>!before[k]);
+  const removed=Object.keys(before).filter(k=>!now[k]);
+  p.unlocked=now;persist(p);
+  if(added.length||removed.length){
+    const log=unlockLog();
+    log.unshift({who:n,by:by.trim(),added,removed,ts:Date.now()});
+    save(UNLOCK_LOG,log.slice(0,300));
+  }
+  alert('Access saved. '+added.length+' opened, '+removed.length+' closed. Nothing was certified.');
+  renderDetail(n);
+}
+function renderUnlockLog(){
+  const log=unlockLog();
+  const rows=log.map(e=>`<tr><td>${new Date(e.ts).toLocaleString()}</td><td>${esc(e.by)}</td><td>${esc(e.who)}</td>
+    <td>${e.added.length?'opened '+e.added.length:''}${e.added.length&&e.removed.length?', ':''}${e.removed.length?'closed '+e.removed.length:''}<div class="lesson-note">${esc(e.added.concat(e.removed.map(r=>'-'+r)).join(', '))}</div></td></tr>`).join('');
+  app.innerHTML=`<div class="fade"><div class="admin-head"><div><div class="crumb">Administrator</div><h1>Access log</h1></div>
+    <button class="btn btn-ghost" onclick="renderAdmin()">Back</button></div>
+    <div class="passbar">Every module opened or closed early, who did it, and when. Access never grants credit.</div>
+    ${log.length?`<div class="table-wrap"><table><tr><th>When</th><th>By</th><th>Trainee</th><th>Change</th></tr>${rows}</table></div>`:'<div class="standard">Nothing logged yet.</div>'}</div>`;
+  window.scrollTo(0,0);
+}
 function renderAdmin(){
   const trainees=getTrainees();const names=Object.keys(trainees).sort();const c=certCounts();
   let rows='';
@@ -1640,16 +2149,40 @@ function renderAdmin(){
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveDrillCfg()">Save practice server</button><button class="btn btn-ghost" onclick="testDrill()">Test connection</button></div>
       <div id="dtest" class="lesson-note"></div>
     </div>
-    <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 8px;color:var(--gold-bright)">Gates</h2>
-    <div class="config-row" style="align-items:center;gap:10px;max-width:560px">
-      <label class="lesson-note" style="min-width:220px">Explain drill pass mark (50 to 100)</label>
-      <input id="explainmark" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${explainPass()}">
-      <button class="btn btn-gold" onclick="saveExplainMark()">Save</button>
-      <span id="explainmarksaved" class="lesson-note"></span>
+    <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 8px;color:var(--gold-bright)">Location and alerts</h2>
+    <div class="config-row" style="flex-direction:column;align-items:stretch;gap:8px;max-width:620px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Location stamped on certificates</label>
+        <input id="loc" class="dinput" style="max-width:220px" placeholder="Dallas" value="${esc(getLocation())}"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveLoc()">Save location</button><span id="locsaved" class="lesson-note"></span></div>
+      <input id="hookurl" class="dinput" placeholder="Webhook URL (Make.com or Zapier) for sign-off alerts" value="${esc(getHook().url)}">
+      <input id="hookmail" class="dinput" placeholder="Email to alert (passed through to the webhook)" value="${esc(getHook().email)}">
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveHook()">Save alerts</button>
+        <button class="btn btn-ghost" onclick="testHook()">Send test</button><span id="hooksaved" class="lesson-note"></span></div>
+      <div class="lesson-note">Every module sign-off posts the trainee, module, certifier, location, and certificate ID to this webhook. Point it at a Make.com scenario that fans out to Slack and email.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-ghost" onclick="renderUnlockLog()">View access log</button></div>
     </div>
-    <div class="lesson-note" style="margin:6px 2px">Trainees must pass ${EXPLAIN_QUOTA} different explain questions at this mark to be ready for sign-off. Change applies to everyone.</div>
+    <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 8px;color:var(--gold-bright)">Gates</h2>
+    <div class="standard" style="margin-top:0">Defaults apply everywhere. A per-module override beats the default for that module only. Leave an override blank to use the default.</div>
+    <div class="config-row" style="flex-direction:column;align-items:stretch;gap:8px;max-width:620px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Explain pass mark (50 to 100)</label>
+        <input id="g_explainPass" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${gatesAll().def.explainPass}"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Explain questions to clear (1 to 7)</label>
+        <input id="g_explainQuota" class="dinput" style="max-width:90px" type="number" min="1" max="7" value="${gatesAll().def.explainQuota}"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Roleplay pass score (50 to 100)</label>
+        <input id="g_drillScore" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${gatesAll().def.drillScore}"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Different customers to clear (1 to 6)</label>
+        <input id="g_drillPersonas" class="dinput" style="max-width:90px" type="number" min="1" max="6" value="${gatesAll().def.drillPersonas}"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveGateDefaults()">Save defaults</button>
+        <span id="gatesaved" class="lesson-note"></span></div>
+    </div>
+    <h3 style="font-size:15px;margin:18px 0 8px;color:var(--cream-dim)">Per-module overrides</h3>
+    <div class="config-row" style="flex-direction:column;align-items:stretch;gap:8px;max-width:620px">
+      <select id="g_mod" class="dinput" onchange="renderGateOv()">${flatModules().map(x=>`<option value="${x.mod.id}">${esc(x.tier.n)}. ${esc(x.mod.name)}</option>`).join('')}</select>
+      <div id="gateov"></div>
+    </div>
     <p style="color:var(--cream-dim);font-size:13px;margin-top:14px">Each module is certified by a manager one-on-one after the trainee passes its written test, and the next module unlocks only after that sign-off. Managers can sign off in Manager access (separate passcode); you can also sign off from a trainee's Details. Resets and data wipe are owner-only.</p></div>`;
   window.scrollTo(0,0);
+  renderGateOv();
 }
 function renderDetail(n){
   const trainees=getTrainees();const p=normalize(trainees[n]);if(!p){renderAdmin();return;}
@@ -1661,7 +2194,7 @@ function renderDetail(n){
       const pill=s==='certified'?'pill-g':(s==='locked'?'pill-l':'pill-a');
       let action='';
       if(s==='awaiting')action=`<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="adminSignOff('${esn}','${m.id}')">Sign off</button>`;
-      else if(s==='certified'&&rec&&rec.signoff)action=`signed by ${esc(rec.signoff.by)}`;
+      else if(s==='certified'&&rec&&rec.signoff)action=`signed by ${esc(rec.signoff.by)}${rec.signoff.loc?' at '+esc(rec.signoff.loc):''}<div class="lesson-note">${esc(rec.signoff.cert||'')}</div>`;
       modRows+=`<tr><td>${esc(m.name)}</td><td><span class="pill ${pill}">${s}</span></td><td>${rec?rec.best+'%':'-'}</td><td>${rec?rec.attempts:0}</td><td>${action}</td></tr>`;});
     const fr=p.finals[t.id];const fs=finalStatus(p,t.id);
     modRows+=`<tr><td><b>${esc(t.name)} Final Exam</b></td><td><span class="pill ${fs==='passed'?'pill-g':(fs==='available'?'pill-a':'pill-l')}">${fs}</span></td><td>${fr?fr.best+'%':'-'}</td><td>${fr?fr.attempts:0}</td><td></td></tr>`;
@@ -1673,7 +2206,7 @@ function renderDetail(n){
     return `<tr><td>${fmtDate(e.ts)}</td><td>${esc(label)}</td><td>${e.score}%</td><td>${e.passed?'<span class="pill pill-g">pass</span>':'<span class="pill pill-l">fail</span>'}</td></tr>`;}).join('');
   if(!logRows)logRows=`<tr><td colspan="4" style="color:var(--cream-dim)">No attempts yet.</td></tr>`;
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>${esc(n)}</h1>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="exportTrainee('${esn}')">Export record (CSV)</button><button class="btn btn-ghost" onclick="resetTrainee('${esn}')">Reset</button><button class="btn btn-gold" onclick="renderAdmin()">Back</button></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="renderUnlock('${esn}')">Open modules</button><button class="btn btn-ghost" onclick="exportTrainee('${esn}')">Export record (CSV)</button><button class="btn btn-ghost" onclick="resetTrainee('${esn}')">Reset</button><button class="btn btn-gold" onclick="renderAdmin()">Back</button></div></div>
     <div class="standard" style="margin-top:0"><b>Module sign-off</b><br>Each module is certified by a manager one-on-one after the trainee passes its written test. Modules marked <b>awaiting</b> are ready for a sign-off. You can sign one off here, or a manager can do it in Manager access. The next module unlocks only after the prior one is signed off.</div>
     <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 10px;color:var(--gold-bright)">Module and Final Status</h2>
     <div class="table-wrap"><table><tr><th>Item</th><th>Status</th><th>Best</th><th>Attempts</th><th>Sign-off</th></tr>${modRows}</table></div>
@@ -1681,7 +2214,7 @@ function renderDetail(n){
     <div class="table-wrap"><table><tr><th>When</th><th>Item</th><th>Score</th><th>Result</th></tr>${logRows}</table></div></div>`;
   window.scrollTo(0,0);
 }
-function adminSignOff(n,id){const t=getTrainees();const p=normalize(t[n]);if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}if(!explainReady(p,id)){alert('That module still needs the explain drill (3 different questions passed) before sign-off.');return;}const by=prompt('Name to record for this sign-off:');if(by===null)return;if(by.trim().length<2){alert('A name is required to sign off.');return;}certifyModule(p,id,by.trim());renderDetail(n);}
+function adminSignOff(n,id){const t=getTrainees();const p=normalize(t[n]);if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}if(!explainReady(p,id)){alert('That module still needs the explain drill ('+explainQuotaFor(id)+' different questions passed) before sign-off.');return;}const by=prompt('Name to record for this sign-off:');if(by===null)return;if(by.trim().length<2){alert('A name is required to sign off.');return;}certifyModule(p,id,by.trim());renderDetail(n);}
 function resetTrainee(n){if(!confirm('Reset all progress for '+n+'?'))return;const t=getTrainees();if(t[n]){t[n]=newTrainee(n);saveTrainees(t);}renderAdmin();}
 function changeAdminPass(){const np=prompt('New administrator passcode:');if(np&&np.length>=4){save(STORE.admin,np);alert('Admin passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
 function changeMgrPass(){const np=prompt('New manager passcode:');if(np&&np.length>=4){save(MGR_STORE,np);alert('Manager passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
@@ -1759,8 +2292,8 @@ function renderMgrTrainee(n){
 function mgrSignOff(n,id){
   const trainees=getTrainees();const p=normalize(trainees[n]);
   if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}
-  if(!explainReady(p,id)){alert('That module still needs the explain drill (3 different questions passed) before sign-off.');return;}
-  if(moduleDrill(id)&&!quotaMet(p,id)){const q=drillQuota(id);if(!confirm('This trainee has not hit the practice bar of '+q.reps+' calls scoring '+q.score+' or higher. Sign off anyway?'))return;}
+  if(!explainReady(p,id)){alert('That module still needs the explain drill ('+explainQuotaFor(id)+' different questions passed) before sign-off.');return;}
+  if(moduleDrill(id)&&!quotaMet(p,id)){const q=drillQuota(id);const need=Math.min(q.personas,modulePersonas(id).length);if(!confirm('This trainee has passed only '+drillPassed(p,id).length+' of '+need+' different customers at '+q.score+' or higher. Sign off anyway?'))return;}
   const code=prompt('Manager passcode to certify this module:');if(code===null)return;
   if(code!==getMgrPass()){alert('Incorrect manager passcode.');return;}
   const by=prompt('Your name (recorded with this sign-off):');if(by===null)return;
