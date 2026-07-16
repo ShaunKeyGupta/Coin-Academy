@@ -195,7 +195,7 @@ textarea.dinput{min-height:54px;resize:vertical;line-height:1.4}
 <div class="topbar" id="topbar">
   <div class="brand">
     <div class="crest">CSA</div>
-    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder</div></div>
+    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v13</span></div></div>
   </div>
   <div class="topbar-right" id="topbarRight"></div>
 </div>
@@ -391,6 +391,496 @@ const FLASHCARDS=[
 ];
 
 /* ---- structure helpers ---- */
+/* ---- Explain-it-out-loud drill (knowledge) ---- */
+const EXPLAIN_QUOTA=3, EXPLAIN_PARTIAL=0.65;
+function explainPass(){const v=parseInt(localStorage.getItem('sa_explainpass_v1'),10);return (v>=50&&v<=100)?v:80;}
+function setExplainPass(n){const v=parseInt(n,10);if(v>=50&&v<=100)localStorage.setItem('sa_explainpass_v1',String(v));}
+function saveExplainMark(){const el=document.getElementById('explainmark');if(!el)return;const v=parseInt(el.value,10);if(!(v>=50&&v<=100)){const s=document.getElementById('explainmarksaved');if(s)s.textContent='Enter 50 to 100.';return;}setExplainPass(v);const s=document.getElementById('explainmarksaved');if(s)s.textContent='Saved at '+v+'.';}
+const EXPLAIN={
+ 'm1.1':{concept:"who we are and the appointment setter role",
+  points:[
+   "We are a collectors association, not a pawn shop; we work with private collectors and auction houses and can pay top of market because most of what we buy goes to private clients",
+   "The setter's two jobs are to book and confirm appointments and to reach new leads fast (speed to lead)",
+   "Setters never give a price or negotiate on the phone; they get a photo and book the appointment",
+   "The four customer avatars are Lifelong Collector, Inherited (the most common), Duplicate Seller, and Curious",
+   "We buy gold, silver, and platinum, pre-1965 silver coins, key-date coins, pre-1933 US gold, sterling, and qualifying diamonds and watches; we do not buy plated or filled metal, costume jewelry, modern clad coins, or fashion watches"],
+  prompts:[
+   "Explain to a brand new setter who we are and why we are not a pawn shop.",
+   "A friend asks what your job as a setter actually is. Explain it.",
+   "Walk me through the four customer avatars and which one is most common.",
+   "What do we buy and what do we not buy? Explain it like you are training someone.",
+   "Why do we never give a price on the phone? Explain the reasoning.",
+   "Explain how being a collectors association lets us pay more than a pawn shop.",
+   "A new hire asks for the one rule that protects every deal. Explain it and why."]},
+ 'm1.2':{concept:"the lead pipeline stages and notes",
+  points:[
+   "The pipeline tracks every lead; the stage tells everyone where the lead is and what happens next, and a wrong stage breaks follow-up and loses money",
+   "New means no outreach yet, while Working, Attempting to Contact means the first attempt has been made",
+   "Sent to Consignment is for sellers who want to sell on auction, and Wanting to Ship is for sellers outside our workable area",
+   "Low Value means we would buy but there is not enough, Junk Lead is items we do not buy, Cold Lead means we could not reach them, and Lost Lead means we could not close",
+   "For Qualified, Low Value, and Junk Lead you write what the customer has, and you get photos before scheduling"],
+  prompts:[
+   "Explain to a new setter why the pipeline stage matters and what goes wrong if it is wrong.",
+   "Walk me through the difference between New and Working, Attempting to Contact.",
+   "One seller wants to sell on auction and another is out of state wanting to ship. Explain which stage each goes to and why.",
+   "Explain the difference between Low Value, Junk Lead, Cold Lead, and Lost Lead.",
+   "Why do we write what the customer has in the notes? Explain it.",
+   "Explain why photos come before scheduling a lead.",
+   "Teach me how accurate stages keep follow-up working without an extra phone call."]},
+ 'm1.3':{concept:"the phone framework and the 3A objection method",
+  points:[
+   "3A is Acknowledge, Associate, Ask, in that order, used to handle every objection",
+   "Open with your name and company, confirm they still want to come in, and listen for high-value trigger words like gold and large amounts of silver",
+   "Standard items get routed to send photos to your line, while high-value items go straight to scheduling with two specific time options",
+   "Never give any number on the phone, not even a range; get a photo and book the appointment",
+   "Close with two specific times rather than whenever works, because removing open choice raises the show rate"],
+  prompts:[
+   "Explain the 3A framework and the order of the three steps.",
+   "Teach a new setter how to open a call and what to listen for.",
+   "A caller demands a ballpark price. Walk me through how you handle it.",
+   "Why do we never give a number on the phone? Explain it.",
+   "Explain the two-option close and why it beats whenever works for you.",
+   "Explain how you route a standard-item caller versus a high-value caller.",
+   "A caller says they researched it online and it is worth a certain amount. Explain how you respond."]},
+ 'm1.4':{concept:"live phones, daily rhythm, and lead recovery",
+  points:[
+   "This stage is daily reps on live phones; you review one random recorded call each day and pick one specific thing to improve tomorrow",
+   "Speed to lead is the priority: reach a brand new lead fast, ahead of older follow-ups, and log every attempt so the stage stays accurate",
+   "Recover a no-show by calling back quickly (about two hours), offering a new time, and rebooking before marking it off",
+   "Work cold leads daily, especially when there is a fresh reason such as a rise in metal prices, within a sensible cap so it does not look like spam",
+   "Confirm booked appointments to reduce no-shows and protect the show rate"],
+  prompts:[
+   "Explain how a setter should run a daily self-review of their calls.",
+   "Teach me the priority when a brand new lead and older follow-ups are both waiting.",
+   "Walk me through how you recover a no-show.",
+   "Explain when and how to reactivate cold leads.",
+   "Why do we confirm booked appointments? Explain it.",
+   "Explain why logging every call outcome matters.",
+   "What is the fastest way to improve on the phones? Explain it."]},
+ 'm1.5':{concept:"the buyer shadow and the setter promotion gate",
+  points:[
+   "During a buyer shadow you watch the buyer greet, profile, evaluate, handle objections, and close, without interrupting and with your phone away",
+   "After each appointment you note one thing you could not yet do yourself and one thing to improve on the setter side",
+   "Promotion to Junior Purchaser requires consistency, accurate pipeline notes, a strong show rate, a passed written test, and a passed recorded role-play, all held for two months",
+   "Promotion is decided on data and signed off by leadership, not on tenure or relationships"],
+  prompts:[
+   "Explain what a setter watches for during a buyer shadow and how they behave.",
+   "Teach me what to note after each shadowed appointment.",
+   "Walk me through the gates required to promote to Junior Purchaser.",
+   "Why is promotion decided on data instead of tenure? Explain it.",
+   "How long must the promotion gates hold and why? Explain it.",
+   "Explain who signs off on a promotion and what they base it on.",
+   "A new setter asks how to actually earn the promotion. Explain it."]},
+ 'm2.1':{concept:"identifying coins and metals on sight",
+  points:[
+   "Value comes from rarity and condition, not age, so a possible key date is set aside and routed to the numismatist, never melted or priced from memory",
+   "Silver content by era: 1964 and earlier dimes, quarters, and halves are 90 percent silver, 1965 to 1970 halves are 40 percent silver, and Jefferson war nickels (1942 to 1945) are 35 percent silver",
+   "Gold stamps are 10K equals 417, 14K equals 585, 18K equals 750, 22K equals 916; reject GF, GP, HGE, 1/10, and 1/20 because they are plated or filled, not solid",
+   "Sterling is marked .925, Sterling, or Ster, and platinum is marked PT, Plat, Platinum, or 950",
+   "CC means Carson City, the rarest mint, so a CC Morgan always goes to the numismatist",
+   "A real silver dollar weighs about 26.7 grams, so a noticeably light one is likely fake"],
+  prompts:[
+   "Explain why a coin's value comes from rarity and condition rather than age, and what you do with a possible key date.",
+   "Teach a new buyer the silver content by era for dimes, quarters, halves, and war nickels.",
+   "Walk me through the gold karat stamps and which stamps mean reject.",
+   "How do you tell real sterling and platinum from the stamps? Explain it.",
+   "Explain what a CC mint mark means and what you do with a CC Morgan.",
+   "A silver dollar feels light on the scale. Explain what that tells you and why.",
+   "A customer is unsure what an old coin is. Explain the safe rule for handling it."]},
+ 'm2.11':{concept:"early and unusual coins and the lookup rule",
+  points:[
+   "Early or unusual coins (large cents, Flying Eagle and Indian Head cents, two and three cent pieces, half dimes, twenty-cent pieces, pre-1933 US gold) are not on the deal sheet and must be looked up or routed, never priced from memory",
+   "Raw coins are priced from eBay sold and completed listings in auction format, recently ended, in similar condition; active or Buy It Now listings are asking prices and do not count",
+   "Graded coins in a slab are priced from greysheet wholesale for the date and grade on the label",
+   "Post the finding in the team pricing channel for a second set of eyes, or route to the numismatist when condition is hard to judge or the coin is significant",
+   "Condition swings these coins sharply, so a cleaned or damaged coin can be worth a fraction of a clean one"],
+  prompts:[
+   "Explain the one rule that covers every early or unusual coin.",
+   "Teach me how to price a raw early coin the right way.",
+   "How do you price a graded coin in a slab? Explain it.",
+   "Why do we use sold and completed listings instead of active listings? Explain it.",
+   "Walk me through when to route a coin to the numismatist instead of pricing it.",
+   "A customer's early coin looks bright and polished. Explain what that may mean for value.",
+   "A new buyer wants to guess a price to look fast. Explain why that is dangerous."]},
+ 'm2.2':{concept:"verifying metal with the magnet, scratch, and scale",
+  points:[
+   "The test order is magnet first, then scratch on jewelry only, then scale",
+   "Real gold, silver, and platinum are not magnetic, so a strong pull on the body means fake; test the chain or band, not the clasp, because clasps can hold steel springs",
+   "Never acid-test a coin, because acid permanently destroys collector value",
+   "On a silver scratch test, creamy or milky means real sterling, while green or fizzing means plated",
+   "Zero the scale before every batch, and pay for metal only, deducting weight for stones and for a watch's movement and glass"],
+  prompts:[
+   "Explain the correct order of the three metal tests and why each comes when it does.",
+   "Teach me the magnet test and where on a chain to test it.",
+   "Why do we never acid-test a coin? Explain it.",
+   "Walk me through what the silver scratch test tells you.",
+   "Explain how you handle deductions for stones and watch parts when weighing.",
+   "A gold chain sticks to a magnet at the clasp. Explain what you do.",
+   "Explain why you zero the scale before every batch."]},
+ 'm2.7':{concept:"judging watches and diamonds and when to route",
+  points:[
+   "Pocket watch jewel counts: 7 is a starter (lower value), 15 to 20 is mid level (about 50 to 100 dollars), 21 and up is high end (about 100 to 500 dollars)",
+   "A solid gold watch case is bought for its melt value regardless of brand, deducting for the movement and glass",
+   "Luxury buy brands include Rolex, Patek Philippe, Audemars Piguet, Omega, Cartier, Tudor, Breitling, TAG Heuer, IWC, and Jaeger-LeCoultre; fashion brands and smartwatches are skipped unless the case is solid gold",
+   "The diamond 4 Cs are Carat, Cut, Color, and Clarity; color is best at D and clarity is best near Flawless",
+   "Handle small accent stones within the jewelry deal, but route any loose, half-carat-and-up, or certified diamond and any vintage or uncertain high-end watch to the specialist"],
+  prompts:[
+   "Explain how the jewel count tells you the tier and rough value of a pocket watch.",
+   "Teach me which watches we buy and which we skip.",
+   "A no-name watch has a solid gold case. Explain what you do with it.",
+   "Walk me through the diamond 4 Cs and which end of each scale is best.",
+   "Explain when a diamond is handled in the jewelry deal versus routed to the specialist.",
+   "Why do we route a vintage or uncertain high-end watch? Explain it.",
+   "Explain why we deduct for the movement and glass on a gold pocket watch case."]},
+ 'm2.12':{concept:"recognizing and pricing trading cards",
+  points:[
+   "You are not a grader; you recognize what might be valuable, refuse to guess, and either prove the value or route it to a specialist",
+   "Raw cards are priced from eBay sold and completed auction comps in similar condition, and graded cards from sold comps for that exact card and grade plus population, never from active listings or memory",
+   "Baseball to flag includes pre-war tobacco (T206 era) and 1933 Goudey, 1950s Topps and Bowman stars like the 1952 Mantle, and clean pre-1980 Hall of Fame rookies",
+   "Pokemon to flag includes vintage WOTC era (1999 to 2003) Base Set, especially 1st Edition and Shadowless holo Charizard, and sealed product, which you never open",
+   "Condition and authenticity decide most of the value, and fakes are common on Charizard and vintage baseball, so route anything with bad print, wrong texture, or off weight"],
+  prompts:[
+   "Explain the one rule for whether a closer can buy a card.",
+   "Teach me how to price a raw card versus a graded card.",
+   "Walk me through the baseball cards worth flagging.",
+   "Which Pokemon items do you flag, and why never open sealed product? Explain it.",
+   "Why do we never price a card from active listings? Explain it.",
+   "Explain why condition and authenticity matter so much on a high-value card.",
+   "A card feels wrong and has a fuzzy print. Explain what you do."]},
+ 'm2.14':{concept:"the customer arrival flow and the CRM",
+  points:[
+   "When a customer arrives, in-store or at a roadshow, you first sign them in and check the CRM, before touching the items",
+   "If they have a lead, open it, confirm details, and move it to the right stage; if not, create a lead on the spot with name, phone, and what they brought",
+   "Every arrival becomes a lead, because a logged no-buy is a future follow-up while an unlogged walk-in is gone forever",
+   "After the appointment, update the stage to the real outcome (bought, sent to consignment, low value, junk, lost) so the record is true for the next person",
+   "The roadshow flow is the same as the in-store flow"],
+  prompts:[
+   "Explain the first two things you do when any customer walks up, and why.",
+   "Teach me what to do when the customer already has a lead versus when they do not.",
+   "Why do we log a walk-in who did not buy? Explain it.",
+   "Walk me through updating the stage after the appointment ends.",
+   "Explain why the roadshow flow is the same as in-store.",
+   "A walk-in brought only items we do not buy. Explain what you still do in the CRM.",
+   "Explain why skipping the sign-in and CRM step costs money."]},
+ 'm2.3':{concept:"the deal sheet and the MAX Face ceiling",
+  points:[
+   "The deal sheet has four tabs and you work only on the CALCULATOR tab; never alter the Show Totals and Profit page because the calculator pulls its values from it",
+   "In the Amount column you enter the count for coins and the weight in pennyweight (DWT) for gold, silver, and platinum",
+   "Offer is the sum of your rows and the number you present, Total Value is everything at MAX Face, and the gap between them is your negotiating room",
+   "MAX Face is the ceiling; negotiate up toward it but never above it",
+   "Metal MAX Face comes from spot prices that update every hour, so always use the current sheet and never quote metal from memory",
+   "If the customer wants more than MAX Face, pivot to consignment and move the lead to Sent to Consignment"],
+  prompts:[
+   "Explain the four tabs and which one you actually use at the table.",
+   "Teach me what goes in the Amount column for coins versus metal.",
+   "Walk me through the difference between Offer, Total Value, and MAX Face.",
+   "Why do metal values change during the day, and what does that mean for you? Explain it.",
+   "Explain what you do when a customer wants more than MAX Face.",
+   "Why must you never alter the Show Totals and Profit page? Explain it.",
+   "Explain the negotiating room between the Offer and the Total Value."]},
+ 'm2.15':{concept:"triaging a mixed pile fast",
+  points:[
+   "Triage first, then go deep: sort the lot into three piles, Buy, Route or look up, and Reject or bulk, before careful testing",
+   "The quick screen is stamps first on jewelry and the magnet as a fast screen; 10K to 22K, .925, and platinum stamps go to Buy, while GF, GP, HGE, EPNS, and 1/10 or 1/20 go to Reject",
+   "Coins by era: pre-1965 silver and 1965 to 1970 silver halves go to Buy, modern clad bank coins go to Reject, and early, unusual, or key-date coins go to Route",
+   "Cards, loose or significant diamonds, and anything you cannot value on sight go to Route or look up",
+   "Careful testing happens only on the Buy and Route piles, bulk costume is weighed by the pound, and an early coin must never land in Reject"],
+  prompts:[
+   "Explain the three triage piles and what goes in each.",
+   "Teach me the fast quick screen on a piece of jewelry.",
+   "Walk me through sorting coins by era during triage.",
+   "Why do we triage first instead of testing every item? Explain it.",
+   "Explain what happens to the Buy pile after triage.",
+   "Why is putting an early coin in the Reject pile a mistake? Explain it.",
+   "Explain how you handle a big pile of costume jewelry."]},
+ 'm2.13':{concept:"writing the check and keeping clean records",
+  points:[
+   "Write the check only after the deal is agreed and the items are verified, for the exact agreed offer, payable to the name on the customer's ID",
+   "Write the amount in numbers and in words so it cannot be altered, and note a reference in the memo",
+   "Record the check number on the Final Count page immediately, so the day reconciles and nothing is lost",
+   "Money out must equal the agreed offer; if you wrote the wrong amount or name, void it and rewrite, then record the new number",
+   "If a customer wants more than MAX Face you pivot to consignment, and if a 2500-plus deal is about to walk you escalate before paying"],
+  prompts:[
+   "Explain when you write the check and who it is payable to.",
+   "Why do we write the amount in numbers and in words? Explain it.",
+   "Walk me through recording the check on the Final Count and why it matters.",
+   "You wrote the check for the wrong amount. Explain what you do.",
+   "A customer asks you to write the check to a friend who is not present. Explain your move.",
+   "Explain what makes the day reconcile to zero.",
+   "Explain when you pause instead of writing the check."]},
+ 'm2.8':{concept:"logging closed deals on the Final Count page",
+  points:[
+   "The CALCULATOR page builds the offer and the Final Count page records each deal after it closes; they are different pages",
+   "For each closed deal you log the customer name, check number, amount spent (the agreed offer), and the counts by category",
+   "Log each deal right after it closes while it is fresh, not from memory at the end of the day",
+   "The Final Count feeds the day's totals (people seen, checks written, total spent, total value), so a wrong number means the day will not reconcile",
+   "At close, checks written and total spent should line up, and any mismatch is found before you leave"],
+  prompts:[
+   "Explain the difference between the CALCULATOR page and the Final Count page.",
+   "Teach me what to log for each closed deal.",
+   "Why do we log each deal right after it closes instead of at end of day? Explain it.",
+   "Walk me through what the Final Count feeds and why accuracy matters.",
+   "Your page is off by one check at close. Explain what you do.",
+   "Explain what amount spent means and how it differs from MAX Face.",
+   "Explain what it means for the day to reconcile."]},
+ 'm2.4':{concept:"the 10-step in-person shows sales framework",
+  points:[
+   "The framework has 10 steps, from clarify why they came in to get their information before they leave",
+   "Much of the decision forms in the first minute, so greet by name, build rapport, and avoid politics and religion",
+   "Run the evaluation openly where the customer can see it, because transparency builds the trust that closes the deal",
+   "Deliver the price clearly and confidently, then go quiet and let the customer respond",
+   "Handle the pass it down, spouse, and researched price objections without quoting against their number; use Feel, Felt, Found for emotional objections, and pivot to consignment if cash fails on a high-value item"],
+  prompts:[
+   "Explain the shape of the 10-step framework, from the first step to the last.",
+   "Why does so much of the decision form in the first minute? Explain it.",
+   "Walk me through why the evaluation is done openly.",
+   "Explain what you do right after you deliver the price.",
+   "Teach me how to handle the pass it down to my kids objection.",
+   "Explain Feel, Felt, Found and when you use it.",
+   "Explain what you do if the cash offer fails on a high-value item."]},
+ 'm2.16':{concept:"closing with calm certainty and matched objection responses",
+  points:[
+   "The close is earned earlier through rapport, transparency, and built value, so by the time you state the number most of the work is done",
+   "State the offer with calm certainty, then stop talking, because talking past your own number weakens it",
+   "Handle each objection with its matched response, not a discount, then return to the close and ask for the deal again",
+   "For the online-number objection, do not confirm or deny it; show the work and pivot to consignment if they still want more",
+   "Never exceed MAX Face; pivot to consignment when price is the wall, and escalate a 2500-plus deal that is about to walk"],
+  prompts:[
+   "Explain where the close is actually won.",
+   "Why do you go quiet right after stating the offer? Explain it.",
+   "Teach me how to handle an objection and then get back to the close.",
+   "A customer keeps repeating their online number. Explain how you respond.",
+   "Explain why most lost deals are not lost on price.",
+   "Explain when you pivot to consignment instead of breaking MAX Face.",
+   "Explain how to finish a deal cleanly once the customer is ready."]},
+ 'm2.9':{concept:"de-escalating a difficult customer",
+  points:[
+   "With an upset customer the goal is to stay calm and keep a path to a deal open, not to win the argument",
+   "The two common triggers are a price lower than they hoped and a suspicion of being lowballed",
+   "Lower your voice and slow down, acknowledge the feeling, and use transparency by showing the testing, the weights, and the live sheet",
+   "Never argue, get defensive, or insult what they brought, and never raise above MAX Face to please them; pivot to consignment instead",
+   "If a customer becomes threatening, stop selling, disengage, get a manager or security, and document it"],
+  prompts:[
+   "Explain the real goal when a customer gets upset.",
+   "Teach me the two common triggers for an upset customer.",
+   "Walk me through how you de-escalate and build trust.",
+   "Why do we never raise above MAX Face to calm someone? Explain it.",
+   "Explain what you do when transparency does not satisfy them on price.",
+   "A customer becomes threatening. Explain exactly what you do.",
+   "Explain what you must never do with an upset customer."]},
+ 'm2.17':{concept:"the three escalation triggers and their actions",
+  points:[
+   "Three triggers, three actions: when unsure of anything, get a second opinion before committing; when an item has no set price, look it up before pricing; when a 2500-plus total-value deal is about to walk, get a manager or another closer before it leaves",
+   "A second opinion comes from another closer, the Collectors Slack channel, or the sales manager, never a guess",
+   "Look up raw items from eBay sold and completed auction results and graded items from greysheet, and post the finding to the pricing channel",
+   "The 2500 trigger is based on total value and only fires for a deal about to walk; if it still will not close after escalation, pivot to consignment, and you never exceed MAX Face",
+   "Standing rules: route rare or significant items to the specialist regardless of size, hold the ceiling and pivot to consignment when they want more than MAX Face, and disengage and get help if a customer turns threatening"],
+  prompts:[
+   "Explain the three escalation triggers and the action for each.",
+   "Teach me where to get a second opinion when you are unsure.",
+   "Walk me through the lookup for an item with no set price.",
+   "Explain exactly when the 2500 escalation fires and what it is based on.",
+   "After escalation a big deal still will not close. Explain what you do.",
+   "Why is guessing on something you are unsure of so dangerous? Explain it.",
+   "Explain why a closer who escalates at the right moments out-earns one who guesses."]},
+ 'm2.10':{concept:"pitching and setting up consignment",
+  points:[
+   "Consignment means we sell the item for the customer at auction instead of buying it; the customer keeps ownership until it sells and the final price is set by bidding",
+   "Pitch it when the customer wants more than MAX Face, when the item is rare or high value, or when the lead already wants auction",
+   "Frame it as reaching collectors who compete for the item, explain we handle photography, listing, and buyers, and set expectations honestly that the price depends on bidding and takes time",
+   "Our fee comes from the sale, with exact terms in the agreement set by leadership, and you never overpromise a final price",
+   "Set it up by itemizing, signing the agreement, tagging and storing securely, and moving the lead to Sent to Consignment"],
+  prompts:[
+   "Explain what consignment is and who owns the item until it sells.",
+   "Teach me when to pitch consignment.",
+   "Walk me through how you frame the consignment pitch.",
+   "Why do we never overpromise a final auction price? Explain it.",
+   "Explain how you set up a consignment once the customer agrees.",
+   "A customer wants 30 percent more than MAX Face. Explain your move.",
+   "Explain what we handle for the customer in a consignment."]},
+ 'm2.5':{concept:"supervised buying and the daily review",
+  points:[
+   "Supervision steps down over time: a manager at the table, then nearby, then you solo with an end-of-day review",
+   "The manager steps in only to prevent a real mistake and never takes over your appointment, so you learn by doing",
+   "Targets are closing a strong share of appointments, keeping deals within the pricing rules, and capturing a review on every closed deal",
+   "Your daily numbers (customers seen, bought, average result, reviews, rule issues) are reviewed and checked against the records, and reporting must be honest",
+   "All the rules still apply under supervision, including looking up or routing an unusual item and recording every deal fully"],
+  prompts:[
+   "Explain how supervision steps down over time.",
+   "Teach me what the manager is and is not there to do during a supervised buy.",
+   "Walk me through your targets during supervised buying.",
+   "Why must your daily numbers be reported honestly? Explain it.",
+   "An unusual coin appears while a senior is watching. Explain what you do.",
+   "Explain why supervised deals are recorded the same as solo deals.",
+   "Explain what a sign-off on your supervised buys signals."]},
+ 'm2.6':{concept:"solo buying and the junior purchaser promotion gate",
+  points:[
+   "You run buying fully solo with strong numbers and clean, audit-ready records, and you pass a random check of recent deals with no rule issues",
+   "Promotion requires consistency, a strong close rate and healthy deals, strong reviews, no rule or pricing issues, and a clean records check, all held for two months",
+   "You must have helped train at least one setter, because a manager has to be able to teach, not just sell",
+   "Leadership signs off on the numbers, and then you choose your track, Roadshow Sales Manager or Local Office Manager",
+   "All the rules still apply solo, including escalation, MAX Face, and looking up or routing what you cannot value"],
+  prompts:[
+   "Explain what solo buying requires of your numbers and records.",
+   "Walk me through the gates required to promote toward a manager track.",
+   "Why is helping train a setter part of the gate? Explain it.",
+   "Explain who signs off on the promotion and what comes next.",
+   "A 2500-plus deal is about to walk while you are solo. Explain what you do.",
+   "An item you cannot value comes up while solo. Explain your move.",
+   "Explain why the rules still apply when no one is watching."]},
+ 'm3a.1':{concept:"the pre-event countdown for a roadshow",
+  points:[
+   "Two weeks out you confirm the venue and room, brief the marketing lead, set staffing, and schedule the equipment to ship",
+   "One week out you confirm marketing is live and pulling interest, confirm the supplies kit is complete, and test the camera and router kit",
+   "Three days out you pull the appointment count, escalate to the marketing lead for a boost if it is low, and print transaction sheets",
+   "One day out you arrive in the afternoon, set the room, router, cameras, sign-in tablet, and scale, then photograph the setup and send it to the team channel",
+   "The customer table faces the door, and the setup photo the day before is the first signal of how clean the show will run"],
+  prompts:[
+   "Explain what you do two weeks out from a roadshow.",
+   "Teach me the one-week-out checklist.",
+   "The appointment count is low three days out. Explain what you do.",
+   "Walk me through the one-day-out setup.",
+   "Why do we photograph the setup the day before? Explain it.",
+   "Explain how the room is laid out and where the sign-in goes.",
+   "A new manager wants to skip the countdown. Explain why that is a mistake."]},
+ 'm3a.2':{concept:"setting up internet, cameras, and shipping at a roadshow",
+  points:[
+   "Internet order: connect the laptop to venue WiFi first and confirm it works, then the travel router's own network, then the admin page, then select the venue WiFi, then let cameras and tablet join; keep the router on wall power and connect devices by WiFi, not cable",
+   "Cameras cover the scale, both sides of the customer table, the back table, and the entry; if a camera is down you pause until it is fixed because running without full coverage is not allowed",
+   "The sign-in tablet uses consistent color codes (bought, no sale, offer awaiting a response, customer waiting) with the buyer's initials on each row",
+   "Shipping: cap each box at the set maximum value, tape bottom, middle, and overlap the ends, label city, state, and box number, and record the tracking number",
+   "No breakables and no recently made firearms, ship comics and cards separately and flat, and sort items into the standard bags before boxing"],
+  prompts:[
+   "Explain the internet setup order from the laptop to the cameras joining.",
+   "Teach me what the cameras must cover and what to do if one is down.",
+   "Walk me through how a box is taped, labeled, and tracked for shipping.",
+   "Why do we connect devices to the router by WiFi instead of cable? Explain it.",
+   "Explain the sign-in tablet color codes and the initials.",
+   "What can and cannot be shipped, and how do cards and comics go? Explain it.",
+   "Explain why we cap the value of each shipping box."]},
+ 'm3a.3':{concept:"leading the floor and approving deals",
+  points:[
+   "Keep the morning huddle short: yesterday's result, today's appointments, one reminder, one quick role-play, and end with energy",
+   "Approve deals that stay within the pricing rules, document a borderline one with a likely repeat customer, and reject a rule-breaking deal and pivot to consignment",
+   "Unusual or rare items go to the numismatist or specialist regardless of size, and deals above your authority go up to leadership",
+   "Settle most disputes calmly with the camera footage rather than argument, set honest wait times on busy days, and document any incident in the team channel",
+   "Close the show by stopping new customers, completing the final count, shipping with tracking, settling the venue, and posting a short summary"],
+  prompts:[
+   "Explain how you run a short morning huddle.",
+   "Teach me how you decide to approve, document, or reject a deal.",
+   "An unusual rare item or an above-authority deal reaches the floor. Explain what you do.",
+   "Walk me through how you settle a customer dispute.",
+   "Explain how you close out the show at the end of the day.",
+   "Why do approvals follow the rules and not the moment? Explain it.",
+   "Explain what you do on a busy day so no one feels ignored."]},
+ 'm3a.4':{concept:"the show profit and loss and the after-action review",
+  points:[
+   "Revenue is the resale value of everything bought, and cost of goods is what you actually paid sellers",
+   "Gross profit is revenue minus cost of goods, and net result is gross profit minus direct expenses (venue, marketing, payroll, travel, supplies, shipping)",
+   "Flag any expense that runs well over its budget",
+   "Within a day or two, write a short, honest after-action review: what worked, what did not with the real reason, anything unusual, and recommendations, including the P&L summary",
+   "Bonuses and step-ups are calculated on net profit, not gross, so a high-gross show with heavy costs can net little"],
+  prompts:[
+   "Explain revenue, cost of goods, gross profit, and net result in the show P&L.",
+   "Teach me which costs come out before the net result.",
+   "Walk me through a good after-action review.",
+   "Why is the review most valuable when it is honest? Explain it.",
+   "Two shows have equal gross but one nets more. Explain why.",
+   "Explain what you do with an expense that runs well over budget.",
+   "Why do we read net profit instead of gross? Explain it."]},
+ 'm3a.5':{concept:"the roadshow sales manager certification gate",
+  points:[
+   "You lead two shows back to back on your own, hitting the net result target and keeping full camera coverage, strong reviews, and clean shipping",
+   "The gate also requires enough consistent time, healthy margins on show deals, and no rule or compliance issues",
+   "Leadership certifies based on the numbers and your after-action reviews",
+   "Certification is earned on results across two real solo shows, not a single good day; the standard is consistency you can repeat"],
+  prompts:[
+   "Explain what you must do across two solo shows to be certified.",
+   "Teach me the full promotion gate for Roadshow Sales Manager.",
+   "Why two solo shows instead of one good day? Explain it.",
+   "Walk me through what leadership bases certification on.",
+   "Explain what full camera coverage and clean shipping have to do with the gate.",
+   "Why must margins stay healthy across the solo shows? Explain it.",
+   "A manager had one great show. Explain why that is not enough."]},
+ 'm3b.1':{concept:"opening, closing, and securing the office",
+  points:[
+   "Daily open: disarm the alarm, power and confirm the cameras, check that yesterday's close reconciled, print sheets, unlock and verify the inventory count, and post an open confirmation",
+   "Daily close: stop new appointments before closing, complete the final count and reconcile to zero difference, lock the inventory while leaving cameras running, arm the alarm, and post a close confirmation",
+   "Walk-in flow: greet and sign them in, ask what they brought to estimate time, and protect scheduled appointments by setting an honest wait time or offering a return",
+   "Inventory security: ship out on a regular schedule and when value reaches the set level, and never let on-site value climb past the cap",
+   "Open and close the same way every day and reconcile to zero, because consistent routines and a clean count catch problems early"],
+  prompts:[
+   "Explain the daily open routine step by step.",
+   "Teach me the daily close and what reconcile to zero means.",
+   "Walk me through handling walk-in flow without hurting scheduled appointments.",
+   "Explain how you keep on-site inventory secure.",
+   "Why do we open and close the same way every day? Explain it.",
+   "Why do the cameras stay running after close? Explain it.",
+   "A walk-in must wait. Explain what you do."]},
+ 'm3b.2':{concept:"the office online presence and reviews",
+  points:[
+   "Post to the office business profile on a regular weekly schedule using the marketing lead's content, because consistent posting keeps the office visible in local search",
+   "Ask for a review in person on every closed deal, and follow up by message if it is missed, keeping a steady volume of named reviews",
+   "A bad review alerts you and leadership quickly: look up the customer, draft a calm response, get leadership's approval before posting, then call to make it right",
+   "Never post a public response to a bad review without leadership's approval first",
+   "Build local referral partnerships such as estate attorneys, track who refers, and focus on the partners who actually send business"],
+  prompts:[
+   "Explain how you keep the office's online presence strong.",
+   "Teach me how you collect reviews on a steady basis.",
+   "Walk me through handling a bad review the right way.",
+   "Why do we never post a response to a bad review without approval? Explain it.",
+   "Explain how you build and track local referral partnerships.",
+   "Why does review volume protect the rating? Explain it.",
+   "Explain what you do the moment a low review comes in."]},
+ 'm3b.3':{concept:"office daily numbers, pricing inputs, and pay",
+  points:[
+   "Each day capture revenue (resale value bought), cost of goods (what you paid), gross profit, daily expenses, and the net result, then post a short summary",
+   "Spot prices and pricing rules are set by leadership; you confirm they are current but never change them yourself",
+   "If a price looks wrong, you raise it rather than edit it",
+   "At the end of the period, prepare each buyer's pay from their results, then submit it to leadership for approval before it is paid",
+   "Accuracy in pay is critical, because mistakes there break trust"],
+  prompts:[
+   "Explain the daily numbers you capture for the office.",
+   "Teach me the rule on pricing inputs and who sets them.",
+   "A price in the tool looks wrong. Explain what you do.",
+   "Walk me through preparing and submitting buyer pay.",
+   "Why is accuracy in pay so important? Explain it.",
+   "Why do you confirm spot prices but never change them? Explain it.",
+   "Explain what goes into the office net result."]},
+ 'm3b.4':{concept:"hiring, coaching, and handling underperformance",
+  points:[
+   "Hiring setters: post the role, screen, interview with a short role-play to see how they handle a real call, and a final setter offer needs leadership's sign-off; hiring or removing buyers and above stays with leadership",
+   "Run weekly half-hour one-on-ones: review numbers, coach one specific skill, run one quick role-play, set next week's focus, and write a short note",
+   "Underperformance: if someone misses targets for two weeks, put a clear written improvement plan with specific goals and a timeframe, and if it is not met, move to removal, which leadership reviews",
+   "Run a weekly team huddle: recap last week, set this week's target, one reminder, one role-play, and finish on energy",
+   "People decisions are kept fair and consistent with a written plan first, then a documented decision"],
+  prompts:[
+   "Explain how you hire a setter and what needs leadership sign-off.",
+   "Teach me what a weekly one-on-one covers.",
+   "Walk me through handling someone who misses targets.",
+   "Why does removing or hiring a buyer stay with leadership? Explain it.",
+   "Explain why underperformance starts with a written plan.",
+   "Explain what your weekly team huddle covers.",
+   "Why include a role-play in a setter interview? Explain it."]},
+ 'm3b.5':{concept:"the local office manager certification gate",
+  points:[
+   "You run the office solo for two months, hitting the net result target both months, keeping the rating strong, and keeping records clean",
+   "The gate also requires enough consistent time, healthy office margins, a healthy team (good pipeline habits across your setters), and no compliance issues",
+   "You must have begun training a possible successor, because you cannot be promoted until you have started building the person who could replace you",
+   "Leadership certifies based on the numbers"],
+  prompts:[
+   "Explain what running the office solo for the gate looks like.",
+   "Teach me the full promotion gate for Local Office Manager.",
+   "Why must you have begun training a successor? Explain it.",
+   "Walk me through what a healthy team means for the gate.",
+   "Why two months of hitting the target instead of one? Explain it.",
+   "Explain what leadership bases the certification on.",
+   "A manager hits the numbers but trained no one. Explain why they are not ready."]}
+};
+function hasExplain(id){return !!EXPLAIN[id];}
+function explainPassedIdx(p,id){return (p&&p.explain&&p.explain[id]&&Array.isArray(p.explain[id].passed))?p.explain[id].passed:[];}
+function explainCleared(p,id){return explainPassedIdx(p,id).length>=EXPLAIN_QUOTA;}
+function explainReady(p,id){return !hasExplain(id)||explainCleared(p,id);}
 function flatModules(){const l=[];CURRICULUM.forEach(t=>t.modules.forEach(m=>l.push({tier:t,mod:m})));return l;}
 function tierById(id){return CURRICULUM.find(t=>t.id===id);}
 function tierPool(t){let p=[];t.modules.forEach(m=>{p=p.concat(m.test);});return p;}
@@ -414,7 +904,8 @@ function computeStatus(p){
   const s={};
   CURRICULUM.forEach(t=>t.modules.forEach(m=>{
     if(isCertified(p,m.id))s[m.id]='certified';
-    else if(isTestPassed(p,m.id))s[m.id]='awaiting';
+    else if(isTestPassed(p,m.id)&&explainReady(p,m.id))s[m.id]='awaiting';
+    else if(isTestPassed(p,m.id))s[m.id]='available';
     else s[m.id]='locked';
   }));
   function openTier(mods,gateOk){
@@ -435,7 +926,7 @@ function stats(p){const total=flatModules().length;let passed=0;CURRICULUM.forEa
 function getTrainees(){return load(STORE.trainees,{});}
 function saveTrainees(t){save(STORE.trainees,t);}
 function currentName(){return load(STORE.current,null);}
-function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
+function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};p.explain=p.explain||{};if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
 function currentProgress(){const t=getTrainees();const n=currentName();return n&&t[n]?normalize(t[n]):null;}
 function persist(p){const t=getTrainees();t[p.name]=p;saveTrainees(t);}
 function newTrainee(n){return{name:n,created:Date.now(),lastActivity:Date.now(),modules:{},finals:{},signoff:{tier3a:false,tier3b:false},completedAt:null,log:[]};}
@@ -708,6 +1199,107 @@ function renderDrillScore(r){
 }
 function drillExit(){const id=drillState?drillState.id:null;if(drillState&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
 
+/* ---- Explain-it-out-loud drill ---- */
+let explainState=null, explainRec=null;
+function startExplain(id){
+  if(!hasExplain(id))return;
+  if(!drillReady()){alert('The AI practice server is not set up yet. An administrator can add it in Administrator settings.');return;}
+  const data=EXPLAIN[id];
+  const p=previewMode?null:currentProgress();
+  const passed=explainPassedIdx(p,id);
+  const order=shuffle(data.prompts.map((_,i)=>i));
+  let idx=order.find(i=>passed.indexOf(i)===-1);if(idx===undefined)idx=order[0];
+  explainState={id,data,idx,busy:false,listening:false,dictBase:'',dictFinal:''};
+  renderExplain();
+}
+function renderExplain(){
+  const s=explainState;if(!s)return;
+  const p=previewMode?null:currentProgress();
+  const count=explainPassedIdx(p,s.id).length;
+  const {tier,mod}=findModule(s.id);
+  const v=voiceSupported();
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(tier.name)} ${previewMode?'(preview)':''}</div><h1>Explain: ${esc(mod.name)}</h1></div>
+    <button class="btn btn-ghost" onclick="explainExit()">Back to module</button></div>
+    <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}Pass ${EXPLAIN_QUOTA} different questions at ${explainPass()} or higher. ${count} of ${EXPLAIN_QUOTA} passed.</div>
+    <div class="standard" style="margin-top:0"><b>Your question</b><br>${esc(s.data.prompts[s.idx])}</div>
+    <div class="lesson-note" style="margin:8px 2px">Explain it in your own words. Plain language is fine; you do not need the exact wording.</div>
+    <textarea id="einput" rows="6" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font:inherit" placeholder="Speak or type your explanation here..."></textarea>
+    <div id="eerr" class="lesson-note" style="color:#e0a06a;min-height:16px;margin:6px 2px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+      ${v?`<button class="btn btn-ghost" id="emic" onclick="explainMic()">Tap to talk</button>`:''}
+      <button class="btn btn-ghost" onclick="explainNew()">New question</button>
+      <button class="btn btn-gold" onclick="explainSubmit()">Submit my explanation</button>
+    </div></div>`;
+  window.scrollTo(0,0);
+}
+function explainNew(){
+  const s=explainState;if(!s)return;
+  if(s.listening){s.listening=false;try{explainRec&&explainRec.stop();}catch(e){}explainRec=null;}
+  const p=previewMode?null:currentProgress();const passed=explainPassedIdx(p,s.id);
+  let order=shuffle(s.data.prompts.map((_,i)=>i)).filter(i=>i!==s.idx);
+  if(!order.length)order=[s.idx];
+  let idx=order.find(i=>passed.indexOf(i)===-1);if(idx===undefined)idx=order[0];
+  s.idx=idx;s.dictBase='';s.dictFinal='';renderExplain();
+}
+function explainStartRec(){
+  const s=explainState;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!s)return;
+  const rec=new SR();rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;explainRec=rec;
+  rec.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)s.dictFinal+=r[0].transcript+' ';else interim+=r[0].transcript;}const di=document.getElementById('einput');if(di)di.value=(s.dictBase+s.dictFinal+interim).replace(/\s+/g,' ').replace(/^\s+/,'');};
+  rec.onend=()=>{if(s.listening){try{explainStartRec();}catch(e){}}};
+  rec.onerror=()=>{};
+  try{rec.start();}catch(e){}
+}
+function explainMic(){
+  const s=explainState;if(!s)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+  const b=document.getElementById('emic');
+  if(s.listening){s.listening=false;try{explainRec&&explainRec.stop();}catch(e){}explainRec=null;if(b)b.textContent='Tap to talk';return;}
+  const di=document.getElementById('einput');s.dictBase=(di&&di.value)?di.value.replace(/\s+$/,'')+' ':'';s.dictFinal='';s.listening=true;if(b)b.textContent='Listening, tap to stop';explainStartRec();
+}
+function explainScore(points){const a=Array.isArray(points)?points:[];if(!a.length)return 0;let sum=0;a.forEach(pt=>{sum+=pt.status==='hit'?1:(pt.status==='partial'?EXPLAIN_PARTIAL:0);});return Math.round(sum/a.length*100);}
+function explainSubmit(){
+  const s=explainState;if(!s||s.busy)return;
+  if(s.listening){s.listening=false;try{explainRec&&explainRec.stop();}catch(e){}explainRec=null;}
+  const di=document.getElementById('einput');const ans=(di?di.value:'').trim();
+  if(!ans){const ee=document.getElementById('eerr');if(ee)ee.textContent='Say or type your explanation before submitting.';return;}
+  s.busy=true;app.innerHTML=`<div class="fade"><h1>Checking your explanation...</h1><div class="standard">Grading what you said against the key points.</div></div>`;
+  drillAPI('knowledge',{points:s.data.points,concept:s.data.concept,question:s.data.prompts[s.idx],answer:ans})
+    .then(r=>{const sc=explainScore(r.points);logExplain(s.id,s.idx,sc);renderExplainScore(r,sc);})
+    .catch(err=>{s.busy=false;app.innerHTML=`<div class="fade"><h1>Check failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderExplain()">Back to the question</button></div>`;});
+}
+function logExplain(id,idx,sc){
+  if(previewMode)return;const p=currentProgress();if(!p)return;
+  p.explain=p.explain||{};const e=p.explain[id]||{passed:[],attempts:0,best:0};
+  e.passed=Array.isArray(e.passed)?e.passed:[];e.attempts=(e.attempts||0)+1;e.best=Math.max(e.best||0,sc);
+  if(sc>=explainPass()&&e.passed.indexOf(idx)===-1)e.passed.push(idx);
+  p.explain[id]=e;p.log=p.log||[];p.log.push({type:'explain',id,idx,score:sc,ts:Date.now()});
+  p.lastActivity=Date.now();persist(p);
+}
+function renderExplainScore(r,sc){
+  const s=explainState;s.busy=false;
+  const pts=Array.isArray(r.points)?r.points:[];
+  const rows=pts.map(pt=>{
+    const st=pt.status==='hit'?'hit':(pt.status==='partial'?'partial':'miss');
+    const pill=st==='hit'?'<span class="pill pill-g">got it</span>':(st==='partial'?'<span class="pill pill-a">partial</span>':'<span class="pill pill-l">missed</span>');
+    const said=pt.said?`<div class="lesson-note">You said: ${esc(pt.said)}</div>`:'';
+    const better=(st!=='hit'&&pt.better)?`<div class="dmodel"><b>Stronger answer:</b> ${esc(pt.better)}</div>`:'';
+    return `<tr><td style="width:64px">${pill}</td><td>${esc(pt.point)}${said}${better}</td></tr>`;
+  }).join('');
+  const passed=sc>=explainPass();
+  const p=previewMode?null:currentProgress();const count=explainPassedIdx(p,s.id).length;
+  const ring=sc>=explainPass()?'#7fd3a5':(sc>=60?'#d9b84a':'#e0a06a');
+  const done=count>=EXPLAIN_QUOTA;
+  app.innerHTML=`<div class="fade"><div class="admin-head"><h1>Explanation Scored</h1><button class="btn btn-gold" onclick="explainExit()">Back to module</button></div>
+    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${passed?'Passed this question':'Not yet, you need '+explainPass()}</div><div class="lesson-note">${done?'Explain drill complete for this module.':count+' of '+EXPLAIN_QUOTA+' different questions passed'}</div></div></div>
+    ${r.note?`<div class="standard"><b>Coach's note:</b> ${esc(r.note)}</div>`:''}
+    <div class="table-wrap"><table>${rows}</table></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      ${done?'':`<button class="btn btn-gold" onclick="explainNew()">Next question</button>`}
+      <button class="btn btn-ghost" onclick="explainExit()">Done</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function explainExit(){const id=explainState?explainState.id:null;if(explainState&&explainState.listening){explainState.listening=false;try{explainRec&&explainRec.stop();}catch(e){}explainRec=null;}explainState=null;if(previewMode){if(id)openModulePreview(id);else renderPreviewLadder();}else if(id)openModule(id);else goDash();}
+
 let previewMode=false,previewFrom='admin';
 function startPreview(from){previewMode=true;previewFrom=from||'admin';renderPreviewLadder();}
 function exitPreview(){previewMode=false;if(previewFrom==='manager')renderManager();else renderAdmin();}
@@ -737,6 +1329,7 @@ function openModulePreview(id){
         ${isCoin?`<button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>`:''}
         ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
         ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
+        ${hasExplain(id)?`<button class="btn btn-ghost" onclick="startExplain('${id}')">Explain Drill</button>`:''}
         <button class="btn btn-gold" onclick="startTest('${id}',true)">Take the Test</button>
       </div></div></div>`;
   window.scrollTo(0,0);
@@ -748,7 +1341,9 @@ function openModule(id){
   const st=status[id];
   const cleared=(st==='certified'||st==='awaiting');
   const isCoin=(id==='m2.1');
-  const note=st==='awaiting'?`<div class="standard" style="margin-top:0"><b>Awaiting manager sign-off</b><br>You passed the written test for this module. It now needs a short one-on-one with a manager, who will sign it off by name. The next module unlocks once that sign-off is recorded.</div>`:'';
+  const explainOn=hasExplain(id), exDone=explainCleared(p,id), exCount=explainPassedIdx(p,id).length, testPassed=isTestPassed(p,id);
+  const note=st==='awaiting'?`<div class="standard" style="margin-top:0"><b>Awaiting manager sign-off</b><br>You passed the written test and the explain drill for this module. It now needs a short one-on-one with a manager, who will sign it off by name. The next module unlocks once that sign-off is recorded.</div>`
+    :(testPassed&&explainOn&&!exDone?`<div class="standard" style="margin-top:0"><b>Test passed. One step left before sign-off.</b><br>Finish the explain drill below (${exCount} of ${EXPLAIN_QUOTA} questions passed). The module is ready for a manager once you have explained it in your own words.</div>`:'');
   let practicePanel='';
   if(moduleDrill(id)){
     const weak=weakestBeat(p,id);
@@ -757,6 +1352,12 @@ function openModule(id){
       Hit the practice bar before sign-off: ${q.reps} full calls scoring ${q.score} or higher. ${quotaLine(p,id)}.
       ${weak?`<div class="dmodel" style="margin-top:10px"><b>Your weakest skill:</b> ${esc(weak.label)}. <button class="btn btn-ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="startBeatDrill('${id}','${weak.key}')">Drill just this</button></div>`:''}</div>`;
   }
+  let explainPanel='';
+  if(explainOn){
+    explainPanel=`<div class="standard"><b>Explain it out loud</b><br>
+      Pass ${EXPLAIN_QUOTA} different explain questions at ${explainPass()} or higher to be ready for sign-off. You explain the idea in your own words, by voice or typing, and the coach grades it. ${exDone?'<span class="pill pill-g">explain complete</span>':`<span class="pill pill-l">${exCount} of ${EXPLAIN_QUOTA} passed</span>`}
+      <div style="margin-top:10px"><button class="btn btn-gold" onclick="startExplain('${id}')">${exCount>0?'Continue explain drill':'Start explain drill'}</button></div></div>`;
+  }
   app.innerHTML=`<div class="lesson fade">
     <div class="crumb">${tier.name}</div>
     <h1>${mod.name}</h1>
@@ -764,6 +1365,7 @@ function openModule(id){
     ${note}
     <div class="lesson-card">${mod.lessonHTML}</div>
     ${practicePanel}
+    ${explainPanel}
     <div class="lesson-actions">
       <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -1038,6 +1640,14 @@ function renderAdmin(){
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveDrillCfg()">Save practice server</button><button class="btn btn-ghost" onclick="testDrill()">Test connection</button></div>
       <div id="dtest" class="lesson-note"></div>
     </div>
+    <h2 style="font-family:'Fraunces';font-size:20px;margin:26px 0 8px;color:var(--gold-bright)">Gates</h2>
+    <div class="config-row" style="align-items:center;gap:10px;max-width:560px">
+      <label class="lesson-note" style="min-width:220px">Explain drill pass mark (50 to 100)</label>
+      <input id="explainmark" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${explainPass()}">
+      <button class="btn btn-gold" onclick="saveExplainMark()">Save</button>
+      <span id="explainmarksaved" class="lesson-note"></span>
+    </div>
+    <div class="lesson-note" style="margin:6px 2px">Trainees must pass ${EXPLAIN_QUOTA} different explain questions at this mark to be ready for sign-off. Change applies to everyone.</div>
     <p style="color:var(--cream-dim);font-size:13px;margin-top:14px">Each module is certified by a manager one-on-one after the trainee passes its written test, and the next module unlocks only after that sign-off. Managers can sign off in Manager access (separate passcode); you can also sign off from a trainee's Details. Resets and data wipe are owner-only.</p></div>`;
   window.scrollTo(0,0);
 }
@@ -1071,7 +1681,7 @@ function renderDetail(n){
     <div class="table-wrap"><table><tr><th>When</th><th>Item</th><th>Score</th><th>Result</th></tr>${logRows}</table></div></div>`;
   window.scrollTo(0,0);
 }
-function adminSignOff(n,id){const t=getTrainees();const p=normalize(t[n]);if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}const by=prompt('Name to record for this sign-off:');if(by===null)return;if(by.trim().length<2){alert('A name is required to sign off.');return;}certifyModule(p,id,by.trim());renderDetail(n);}
+function adminSignOff(n,id){const t=getTrainees();const p=normalize(t[n]);if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}if(!explainReady(p,id)){alert('That module still needs the explain drill (3 different questions passed) before sign-off.');return;}const by=prompt('Name to record for this sign-off:');if(by===null)return;if(by.trim().length<2){alert('A name is required to sign off.');return;}certifyModule(p,id,by.trim());renderDetail(n);}
 function resetTrainee(n){if(!confirm('Reset all progress for '+n+'?'))return;const t=getTrainees();if(t[n]){t[n]=newTrainee(n);saveTrainees(t);}renderAdmin();}
 function changeAdminPass(){const np=prompt('New administrator passcode:');if(np&&np.length>=4){save(STORE.admin,np);alert('Admin passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
 function changeMgrPass(){const np=prompt('New manager passcode:');if(np&&np.length>=4){save(MGR_STORE,np);alert('Manager passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
@@ -1081,7 +1691,7 @@ function csvFor(p){
   let rows=[['Type','Name','Status','Best Score','Attempts','Last Attempt','Certified By','Certified At']];
   CURRICULUM.forEach(t=>{t.modules.forEach(m=>{const rec=p.modules[m.id];
     const lastE=(p.log||[]).filter(e=>e.type==='module'&&e.id===m.id).slice(-1)[0];
-    const st=isCertified(p,m.id)?'certified':(isTestPassed(p,m.id)?'awaiting sign-off':'locked');
+    const st=isCertified(p,m.id)?'certified':(isTestPassed(p,m.id)?(explainReady(p,m.id)?'awaiting sign-off':'explain pending'):'locked');
     const by=rec&&rec.signoff?rec.signoff.by:'';
     const at=rec&&rec.signoff?fmtDate(rec.signoff.at):'';
     rows.push(['Module',m.name,st,rec?rec.best+'%':'',rec?rec.attempts:0,lastE?fmtDate(lastE.ts):'',by,at]);});
@@ -1149,6 +1759,7 @@ function renderMgrTrainee(n){
 function mgrSignOff(n,id){
   const trainees=getTrainees();const p=normalize(trainees[n]);
   if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}
+  if(!explainReady(p,id)){alert('That module still needs the explain drill (3 different questions passed) before sign-off.');return;}
   if(moduleDrill(id)&&!quotaMet(p,id)){const q=drillQuota(id);if(!confirm('This trainee has not hit the practice bar of '+q.reps+' calls scoring '+q.score+' or higher. Sign off anyway?'))return;}
   const code=prompt('Manager passcode to certify this module:');if(code===null)return;
   if(code!==getMgrPass()){alert('Incorrect manager passcode.');return;}
