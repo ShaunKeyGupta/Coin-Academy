@@ -1369,6 +1369,29 @@ const PLAYBOOK=[
  ]}
 ];
 let PBQ='';
+let COACHA={q:'',html:'',busy:false};
+function playbookText(){return PLAYBOOK.map(g=>g.sec.toUpperCase()+'\n'+g.items.map(it=>'- '+it.t+': '+it.b).join('\n')).join('\n\n');}
+function askCoach(){
+  const el=document.getElementById('coachq');if(!el)return;
+  const q=el.value.trim();
+  const out=document.getElementById('coacha');
+  if(!q){if(out)out.innerHTML='<div class="lesson-note">Describe the situation first, then ask.</div>';return;}
+  if(!drillReady()){if(out)out.innerHTML='<div class="lesson-note" style="color:#e0a06a">The practice server is not connected, so the coach cannot answer. The playbook below still works. Ask an administrator to connect the server in Administrator settings.</div>';return;}
+  if(COACHA.busy)return;
+  COACHA.busy=true;COACHA.q=q;
+  if(out)out.innerHTML='<div class="lesson-note">Checking the playbook...</div>';
+  drillAPI('coach',{question:q,playbook:playbookText()})
+    .then(r=>{
+      COACHA.busy=false;
+      const esc_a=esc(r.answer||'');
+      const rule=r.rule?`<div class="lesson-note" style="margin-top:8px">Rule applied: ${esc(r.rule)}</div>`:'';
+      COACHA.html=r.escalate
+        ?`<div class="standard" style="margin:10px 0 0;border-left:3px solid #e0a06a"><b>Escalate this one.</b><div style="margin-top:6px">${esc_a}</div>${rule}</div>`
+        :`<div class="standard" style="margin:10px 0 0;border-left:3px solid #7fd3a5"><div>${esc_a}</div>${rule}</div>`;
+      const o2=document.getElementById('coacha');if(o2)o2.innerHTML=COACHA.html;
+    })
+    .catch(err=>{COACHA.busy=false;COACHA.html='';const o2=document.getElementById('coacha');if(o2)o2.innerHTML='<div class="lesson-note" style="color:#e0a06a">Could not reach the coach: '+esc(err.message)+'. Use the playbook below or the escalation ladder.</div>';});
+}
 function renderPlaybook(){
   const q=PBQ.trim().toLowerCase();
   let hits=0;
@@ -1382,6 +1405,11 @@ function renderPlaybook(){
   app.innerHTML=`<div class="fade">
     <div class="admin-head"><div><div class="crumb">Quick reference, use it at the table</div><h1>Playbook</h1></div>
     <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button></div>
+    <div class="standard" style="margin-top:0"><b>Ask the Coach</b>
+      <div class="lesson-note" style="margin:4px 0 8px">Stuck mid-deal? Describe the situation and get the rule that applies. The coach answers only from the playbook and tells you when to escalate instead of guessing.</div>
+      <textarea id="coachq" class="dinput" rows="2" style="width:100%;box-sizing:border-box" placeholder="Example: customer wants more than the sheet says for his gold chain, what do I do?">${esc(COACHA.q)}</textarea>
+      <div style="margin-top:8px"><button class="btn btn-gold" onclick="askCoach()">Ask</button></div>
+      <div id="coacha">${COACHA.html}</div></div>
     <input id="pbq" class="dinput" style="width:100%;box-sizing:border-box;margin-bottom:6px" placeholder="Search the playbook, for example: war nickel, magnet, consignment fee, escalation" value="${esc(PBQ)}" oninput="pbSearch(this.value)">
     <div class="lesson-note" style="margin:2px 2px 10px">${q?hits+' result'+(hits===1?'':'s'):'Everything below is the rule as taught. Live prices are never in here: always price off the current deal sheet.'}</div>
     ${blocks||'<div class="standard">Nothing matches that. Try a shorter word.</div>'}</div>`;
@@ -1498,10 +1526,11 @@ function renderDrillScore(r){
   let rows=s.rub.beats.map(b=>{
     const got=beats.find(x=>x.key===b.key)||{};
     const status=got.status||(got.hit?'hit':'miss');
-    const ev=got.evidence?`<div class="lesson-note">${esc(got.evidence)}</div>`:'';
-    const fix=(status!=='hit'&&modelFor(b.key))?`<div class="dmodel"><b>What great sounds like:</b> ${esc(modelFor(b.key))}</div>`:'';
+    const ev=got.evidence?`<div class="lesson-note" style="margin-top:4px">You said: ${esc(got.evidence)}</div>`:'';
+    const note=got.note?`<div style="margin-top:6px">${esc(got.note)}</div>`:'';
+    const better=(status!=='hit'&&(got.better||modelFor(b.key)))?`<div class="dmodel" style="margin-top:6px"><b>What great sounds like:</b> ${esc(got.better||modelFor(b.key))}</div>`:'';
     const pill=status==='hit'?'<span class="pill pill-g">hit</span>':(status==='partial'?'<span class="pill pill-a">partial</span>':'<span class="pill pill-l">miss</span>');
-    return `<tr><td style="width:42px">${pill}</td><td>${esc(b.label)}${ev}${fix}</td></tr>`;
+    return `<tr><td style="width:42px;vertical-align:top">${pill}</td><td><b>${esc(b.label)}</b>${ev}${note}${better}</td></tr>`;
   }).join('');
   const ring=sc>=85?'#7fd3a5':(sc>=70?'#d9b84a':'#e0a06a');
   const p=currentProgress();
@@ -1511,10 +1540,15 @@ function renderDrillScore(r){
     ? (s.objId?`<button class="btn btn-gold" onclick="startObjectionDrill('${s.id}','${s.objId}')">Run this objection again</button>`
               :`<button class="btn btn-gold" onclick="startBeatDrill('${s.id}','${(s.rub.beats[0]||{}).key}')">Run again</button>`)
     : `<button class="btn btn-gold" onclick="startDrill('${s.id}')">Run another (new customer)</button>`;
+  const debrief=r.coaching?`<div class="standard"><b>Debrief:</b> ${esc(r.coaching)}</div>`:'';
+  const fixStrength=(r.topFix||r.strength)?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 6px">
+    ${r.topFix?`<div class="standard" style="flex:1;min-width:240px;margin:0;border-left:3px solid #e0a06a"><b>Fix first:</b> ${esc(r.topFix)}</div>`:''}
+    ${r.strength?`<div class="standard" style="flex:1;min-width:240px;margin:0;border-left:3px solid #7fd3a5"><b>Keep doing:</b> ${esc(r.strength)}</div>`:''}</div>`:'';
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>${s.focused?'Drill Scored':'Call Scored'}</h1>
     <button class="btn btn-gold" onclick="drillExit()">Back to module</button></div>
     <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${esc(s.script)}</div><div class="lesson-note">${s.focused?'Focused drill':'Customer type this round: '+esc(s.persona.name)}</div></div></div>
-    ${r.coaching?`<div class="standard"><b>Coach's note:</b> ${esc(r.coaching)}</div>`:''}
+    ${debrief}
+    ${fixStrength}
     <div class="table-wrap"><table>${rows}</table></div>
     ${weakBlock}
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
@@ -1796,9 +1830,10 @@ function startQuizTimer(){
   stopQuizTimer();
   quizTimer=setInterval(()=>{
     if(!TEST||TEST.kind!=='quiz'||TEST.submitted){stopQuizTimer();return;}
-    const left=Math.max(0,Math.round((TEST.endsAt-Date.now())/1000));
     const el=document.getElementById('quiztimer');
-    if(el){const m=Math.floor(left/60),s=left%60;el.textContent='Time left '+m+':'+(s<10?'0':'')+s;el.style.color=left<=60?'#e08a78':'';}
+    if(!el){stopQuizTimer();return;}
+    const left=Math.max(0,Math.round((TEST.endsAt-Date.now())/1000));
+    const m=Math.floor(left/60),s=left%60;el.textContent='Time left '+m+':'+(s<10?'0':'')+s;el.style.color=left<=60?'#e08a78':'';
     if(left<=60&&!TEST.warned){TEST.warned=true;}
     if(left<=0){stopQuizTimer();submitTest();}
   },1000);
