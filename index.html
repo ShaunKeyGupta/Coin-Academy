@@ -195,7 +195,7 @@ textarea.dinput{min-height:54px;resize:vertical;line-height:1.4}
 <div class="topbar" id="topbar">
   <div class="brand">
     <div class="crest">CSA</div>
-    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v16</span></div></div>
+    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v18</span></div></div>
   </div>
   <div class="topbar-right" id="topbarRight"></div>
 </div>
@@ -292,6 +292,7 @@ const DRILL_RUBRICS={
 };
 
 const DRILL_QUOTA={'m1.3':{personas:4,score:80},'m2.4':{personas:4,score:80}};
+function drillDifficulty(id){const v=parseInt(gateFor(id,'difficulty'),10);return (v>=1&&v<=10)?v:7;}
 function drillQuota(id){const b=DRILL_QUOTA[id]||{personas:4,score:80};const pv=parseInt(gateFor(id,'drillPersonas'),10),sv=parseInt(gateFor(id,'drillScore'),10);return {personas:(pv>=1&&pv<=6)?pv:b.personas,score:(sv>=50&&sv<=100)?sv:b.score};}
 
 /* Objection bank: each drills ONE objection to automaticity. rubric keys reuse module beats where natural. */
@@ -408,9 +409,9 @@ const EXPLAIN_QUOTA=3, EXPLAIN_PARTIAL=0.75;
 const GATES_STORE='sa_gates_v1';
 function gatesAll(){
   const g=load(GATES_STORE,null);
-  if(g&&g.def)return g;
+  if(g&&g.def){if(g.def.difficulty===undefined){g.def.difficulty=7;save(GATES_STORE,g);}return g;}
   const legacy=parseInt(localStorage.getItem('sa_explainpass_v1'),10);
-  const seeded={def:{explainPass:(legacy>=50&&legacy<=100)?legacy:80,explainQuota:3,drillScore:80,drillPersonas:4},mods:{}};
+  const seeded={def:{explainPass:(legacy>=50&&legacy<=100)?legacy:80,explainQuota:3,drillScore:80,drillPersonas:4,difficulty:7},mods:{}};
   save(GATES_STORE,seeded);return seeded;
 }
 function saveGates(g){save(GATES_STORE,g);}
@@ -1224,7 +1225,7 @@ function drillSend(){
   const di=document.getElementById('dinput');const text=(di?di.value:'').trim();if(!text)return;
   s.msgs.push({who:'rep',text});s.busy=true;renderDrillChat();
   const api=s.msgs.slice(1).map(m=>({role:m.who==='rep'?'user':'assistant',content:m.text}));
-  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,setting:s.setting,messages:api,maxTokens:500})
+  drillAPI('chat',{persona:s.persona,opening:s.persona.opening,script:s.script,setting:s.setting,difficulty:drillDifficulty(s.id),messages:api,maxTokens:500})
     .then(r=>{const reply=(r&&r.reply)?r.reply:'(no response)';s.msgs.push({who:'cust',text:reply});s.busy=false;renderDrillChat();drillSpeak(reply);})
     .catch(err=>{s.busy=false;renderDrillChat();const ee=document.getElementById('derr');if(ee)ee.textContent='Could not reach the practice server. '+err.message;});
 }
@@ -1540,7 +1541,7 @@ function renderDrillScore(r){
   let rows=s.rub.beats.map(b=>{
     const got=beats.find(x=>x.key===b.key)||{};
     const status=got.status||(got.hit?'hit':'miss');
-    const ev=got.evidence?`<div class="lesson-note" style="margin-top:4px">You said: ${esc(got.evidence)}</div>`:'';
+    const ev=got.evidence?`<div class="lesson-note" style="margin-top:4px">The line that scored this: "${esc(got.evidence)}"</div>`:(status==='miss'?`<div class="lesson-note" style="margin-top:4px">Nothing in the call covered this step.</div>`:'');
     const note=got.note?`<div style="margin-top:6px">${esc(got.note)}</div>`:'';
     const better=(status!=='hit'&&(got.better||modelFor(b.key)))?`<div class="dmodel" style="margin-top:6px"><b>What great sounds like:</b> ${esc(got.better||modelFor(b.key))}</div>`:'';
     const pill=status==='hit'?'<span class="pill pill-g">hit</span>':(status==='partial'?'<span class="pill pill-a">partial</span>':'<span class="pill pill-l">miss</span>');
@@ -1555,6 +1556,7 @@ function renderDrillScore(r){
               :`<button class="btn btn-gold" onclick="startBeatDrill('${s.id}','${(s.rub.beats[0]||{}).key}')">Run again</button>`)
     : `<button class="btn btn-gold" onclick="startDrill('${s.id}')">Run another (new customer)</button>`;
   const debrief=r.coaching?`<div class="standard"><b>Debrief:</b> ${esc(r.coaching)}</div>`:'';
+  DBRIEF={id:s.id,scenario:s.script,persona:s.focused?'a focused drill':(s.persona&&s.persona.name)||'a customer',transcript:drillTranscript(s),beats:beats.map(x=>({key:x.key,label:(s.rub.beats.find(bb=>bb.key===x.key)||{}).label||x.key,status:x.status,note:x.note})),history:[],busy:false};
   const fixStrength=(r.topFix||r.strength)?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 6px">
     ${r.topFix?`<div class="standard" style="flex:1;min-width:240px;margin:0;border-left:3px solid #e0a06a"><b>Fix first:</b> ${esc(r.topFix)}</div>`:''}
     ${r.strength?`<div class="standard" style="flex:1;min-width:240px;margin:0;border-left:3px solid #7fd3a5"><b>Keep doing:</b> ${esc(r.strength)}</div>`:''}</div>`:'';
@@ -1565,10 +1567,35 @@ function renderDrillScore(r){
     ${fixStrength}
     <div class="table-wrap"><table>${rows}</table></div>
     ${weakBlock}
+    <details style="margin-top:14px"><summary style="cursor:pointer;color:var(--gold-bright)">Read the full transcript</summary>
+      <div style="white-space:pre-wrap;margin-top:8px;font-size:14px;line-height:1.6">${esc(drillTranscript(s))}</div></details>
+    <div class="standard" style="margin-top:14px"><b>Ask about this call</b>
+      <div class="lesson-note" style="margin:4px 0 8px">Not sure why you missed a step, or what to say next time? Ask the coach about this exact call.</div>
+      <div id="dbchat"></div>
+      <textarea id="dbq" class="dinput" rows="2" style="width:100%;box-sizing:border-box" placeholder="Example: what should I have said when she pushed back on the price?"></textarea>
+      <div style="margin-top:8px"><button class="btn btn-gold" onclick="askDebrief()">Ask the coach</button></div></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
       ${rerun}
       <button class="btn btn-ghost" onclick="drillExit()">Done</button></div></div>`;
   window.scrollTo(0,0);
+}
+let DBRIEF=null;
+function renderDbChat(){
+  const box=document.getElementById('dbchat');if(!box||!DBRIEF)return;
+  box.innerHTML=DBRIEF.history.map(m=>m.role==='user'
+    ?`<div style="margin:8px 0"><b>You:</b> ${esc(m.content)}</div>`
+    :`<div class="dmodel" style="margin:8px 0"><b>Coach:</b> ${esc(m.content)}</div>`).join('')
+    +(DBRIEF.busy?'<div class="lesson-note">Coach is thinking...</div>':'');
+}
+function askDebrief(){
+  if(!DBRIEF||DBRIEF.busy)return;
+  const el=document.getElementById('dbq');if(!el)return;
+  const q=el.value.trim();if(!q)return;
+  if(!drillReady()){DBRIEF.history.push({role:'assistant',content:'The practice server is not connected, so the coach cannot answer right now.'});renderDbChat();return;}
+  DBRIEF.history.push({role:'user',content:q});DBRIEF.busy=true;el.value='';renderDbChat();
+  drillAPI('debrief_chat',{transcript:DBRIEF.transcript,beats:DBRIEF.beats,scenario:DBRIEF.scenario,persona:DBRIEF.persona,question:q,history:DBRIEF.history.slice(0,-1)})
+    .then(r=>{DBRIEF.busy=false;DBRIEF.history.push({role:'assistant',content:r.answer||'No answer came back. Try rephrasing.'});renderDbChat();})
+    .catch(err=>{DBRIEF.busy=false;DBRIEF.history.push({role:'assistant',content:'Could not reach the coach: '+err.message});renderDbChat();});
 }
 function drillExit(){const id=drillState?drillState.id:null;if(drillState&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
 
@@ -2078,10 +2105,10 @@ function saveLoc(){const el=document.getElementById('loc');if(!el)return;setLoca
 function saveGateDefaults(){
   const g=gatesAll();
   const rd=(id,lo,hi)=>{const el=document.getElementById(id);if(!el)return null;const v=parseInt(el.value,10);return (v>=lo&&v<=hi)?v:null;};
-  const ep=rd('g_explainPass',50,100),eq=rd('g_explainQuota',1,7),dsc=rd('g_drillScore',50,100),dp=rd('g_drillPersonas',1,6);
+  const ep=rd('g_explainPass',50,100),eq=rd('g_explainQuota',1,7),dsc=rd('g_drillScore',50,100),dp=rd('g_drillPersonas',1,6),dif=rd('g_difficulty',1,10);
   const out=document.getElementById('gatesaved');
-  if(ep===null||eq===null||dsc===null||dp===null){if(out)out.textContent='Check the ranges.';return;}
-  g.def={explainPass:ep,explainQuota:eq,drillScore:dsc,drillPersonas:dp};saveGates(g);
+  if(ep===null||eq===null||dsc===null||dp===null||dif===null){if(out)out.textContent='Check the ranges.';return;}
+  g.def={explainPass:ep,explainQuota:eq,drillScore:dsc,drillPersonas:dp,difficulty:dif};saveGates(g);
   if(out)out.textContent='Saved.';
 }
 function renderGateOv(){
@@ -2103,7 +2130,9 @@ function renderGateOv(){
     ${dr?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Roleplay pass score (default ${g.def.drillScore})</label>
       <input id="o_drillScore" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${o.drillScore!==undefined?o.drillScore:''}" placeholder="default"></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Different customers (default ${g.def.drillPersonas})</label>
-      <input id="o_drillPersonas" class="dinput" style="max-width:90px" type="number" min="1" max="6" value="${o.drillPersonas!==undefined?o.drillPersonas:''}" placeholder="default"></div>`:'<div class="lesson-note">No roleplay drill on this module.</div>'}
+      <input id="o_drillPersonas" class="dinput" style="max-width:90px" type="number" min="1" max="6" value="${o.drillPersonas!==undefined?o.drillPersonas:''}" placeholder="default"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="lesson-note" style="min-width:230px">Difficulty (1 to 10, default ${g.def.difficulty||7})</label>
+      <input id="o_difficulty" class="dinput" style="max-width:90px" type="number" min="1" max="10" value="${o.difficulty!==undefined?o.difficulty:''}" placeholder="default"></div>`:'<div class="lesson-note">No roleplay drill on this module.</div>'}
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-gold" onclick="saveGateOv()">Save override</button>
       <button class="btn btn-ghost" onclick="clearGateOv()">Clear override</button><span id="ovsaved" class="lesson-note"></span></div></div>`;
 }
@@ -2112,7 +2141,7 @@ function saveGateOv(){
   if(!findModule(id))return;
   const rd=(eid,lo,hi)=>{const el=document.getElementById(eid);if(!el)return undefined;const raw=String(el.value||'').trim();
     if(raw==='')return null;const v=parseInt(raw,10);return (v>=lo&&v<=hi)?v:undefined;};
-  const pairs=[['passMark',rd('o_passMark',50,100)],['explainPass',rd('o_explainPass',50,100)],['explainQuota',rd('o_explainQuota',1,7)],['drillScore',rd('o_drillScore',50,100)],['drillPersonas',rd('o_drillPersonas',1,6)]];
+  const pairs=[['passMark',rd('o_passMark',50,100)],['explainPass',rd('o_explainPass',50,100)],['explainQuota',rd('o_explainQuota',1,7)],['drillScore',rd('o_drillScore',50,100)],['drillPersonas',rd('o_drillPersonas',1,6)],['difficulty',rd('o_difficulty',1,10)]];
   const out=document.getElementById('ovsaved');
   if(pairs.some(p=>p[1]===undefined&&document.getElementById('o_'+p[0]))){if(out)out.textContent='Check the ranges.';return;}
   pairs.forEach(([k,v])=>{if(v!==undefined)setGateOverride(id,k,v);});
@@ -2227,6 +2256,8 @@ function renderAdmin(){
         <input id="g_drillScore" class="dinput" style="max-width:90px" type="number" min="50" max="100" value="${gatesAll().def.drillScore}"></div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Different customers to clear (1 to 6)</label>
         <input id="g_drillPersonas" class="dinput" style="max-width:90px" type="number" min="1" max="6" value="${gatesAll().def.drillPersonas}"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="lesson-note" style="min-width:230px">Roleplay difficulty (1 easy to 10 hard, 7 default)</label>
+        <input id="g_difficulty" class="dinput" style="max-width:90px" type="number" min="1" max="10" value="${gatesAll().def.difficulty||7}"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-gold" onclick="saveGateDefaults()">Save defaults</button>
         <span id="gatesaved" class="lesson-note"></span></div>
     </div>
