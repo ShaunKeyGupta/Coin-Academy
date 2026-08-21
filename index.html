@@ -1562,7 +1562,7 @@ function renderDrillScore(r){
     ${r.strength?`<div class="standard" style="flex:1;min-width:240px;margin:0;border-left:3px solid #7fd3a5"><b>Keep doing:</b> ${esc(r.strength)}</div>`:''}</div>`:'';
   app.innerHTML=`<div class="fade"><div class="admin-head"><h1>${s.focused?'Drill Scored':'Call Scored'}</h1>
     <button class="btn btn-gold" onclick="drillExit()">Back to module</button></div>
-    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${esc(s.script)}</div><div class="lesson-note">${s.focused?'Focused drill':'Customer type this round: '+esc(s.persona.name)}</div></div></div>
+    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${esc(s.script)}</div><div class="lesson-note">${s.focused?'Focused drill (sharpens one step; does not count toward the different-customers quota)':'Customer type this round: '+esc(s.persona.name)}</div></div></div>
     ${debrief}
     ${fixStrength}
     <div class="table-wrap"><table>${rows}</table></div>
