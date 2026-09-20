@@ -37,7 +37,13 @@ h1,h2,h3,.serif{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spac
   box-shadow:0 0 0 2px rgba(201,162,39,.35),0 6px 18px rgba(0,0,0,.4)}
 .brand .name{font-family:'Fraunces';font-size:20px;font-weight:600;letter-spacing:.5px}
 .brand .sub{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:-2px}
-.topbar-right{display:flex;align-items:center;gap:14px;font-size:14px}
+.topbar-right{display:flex;align-items:center;gap:14px;font-size:14px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:820px){
+  .topbar{flex-wrap:wrap;gap:10px;padding:14px 16px}
+  .topbar-right{width:100%;gap:8px;justify-content:flex-start}
+  .topbar-right .btn{padding:8px 12px;font-size:13px}
+  .brand .name{font-size:17px}
+}
 .whoami{color:var(--cream-dim)} .whoami b{color:var(--cream)}
 .btn{font-family:'Archivo';cursor:pointer;border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;transition:.18s;letter-spacing:.3px}
 .btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--navy);box-shadow:0 6px 18px rgba(201,162,39,.3)}
@@ -195,7 +201,7 @@ textarea.dinput{min-height:54px;resize:vertical;line-height:1.4}
 <div class="topbar" id="topbar">
   <div class="brand">
     <div class="crest">CSA</div>
-    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v19</span></div></div>
+    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v26</span></div></div>
   </div>
   <div class="topbar-right" id="topbarRight"></div>
 </div>
@@ -909,6 +915,155 @@ const EXPLAIN={
    "Explain what leadership bases the certification on.",
    "A manager hits the numbers but trained no one. Explain why they are not ready."]}
 };
+// SHORT ANSWER: one concept, graded for completeness (stricter than explain). Study/practice layer.
+const SHORT={
+ 'm1.1':[
+  {q:"What is the company, and how is it different from a pawn shop?",concept:"Collectors association positioning",kp:["A collectors association, not a pawn shop","We work directly with private collectors and auction houses","We educate the seller on rarity, key dates, and value before a number","We pay top of market because most of what we buy goes to private clients"]},
+  {q:"Name the four customer avatars and what marks each one.",concept:"The four customer avatars",kp:["Lifelong Collector: knows key dates, talks like a peer","Inherited: from a late relative, unsure of value, most common","Duplicate Seller: an active collector offloading extras","Curious: no urgency, just wants to know a value"]},
+  {q:"Explain the phone price rule.",concept:"The phone price ladder",kp:["Default is no numbers: get a photo and book the appointment","The ladder only unlocks when the caller clearly described the items and you are sure","A range is permitted after more than two pushes","A price only after a further push","Holding the number is always correct; never quote unidentified items"]},
+  {q:"Explain what we buy and what we do not buy.",concept:"Buy vs reject",kp:["Buy: solid gold, silver, platinum, pre-1965 silver, key dates, pre-1933 gold, sterling, qualifying diamonds and watches","Reject: gold-filled or plated (GF, GP, HGE, 1/10, 1/20), costume, silver-plate (EPNS), modern clad, fashion and smart watches"]}
+ ],
+ 'm1.2':[
+  {q:"Why do pipeline stages matter, and what must you write in the notes for Qualified, Low Value, and Junk Lead?",concept:"Stage accuracy and notes",kp:["The stage tells everyone where the lead is and what happens next","A wrong stage breaks follow-up and loses money","For those stages you write what the customer has, so the next person needs no extra call"]},
+  {q:"Explain the difference between Cold Lead, Lost Lead, and Junk Lead.",concept:"Distinguishing lead stages",kp:["Cold Lead: could not reach them","Lost Lead: reached them but could not close","Junk Lead: items we do not buy"]},
+  {q:"Explain Sent to Consignment vs Wanting to Ship vs Wanting to Buy.",concept:"Routing stages",kp:["Sent to Consignment: wants to sell on auction","Wanting to Ship: outside our workable area, mailing items in","Wanting to Buy: wants to buy from us, not sell"]},
+  {q:"Why get photos before scheduling, and why reach new leads fast?",concept:"Photos and speed to lead",kp:["Photos let the buyer prepare and raise the show rate, unless the customer refuses","Speed to lead drives whether a New lead ever books"]}
+ ],
+ 'm1.3':[
+  {q:"Explain the 3A framework and its order.",concept:"The 3A framework",kp:["Acknowledge the feeling","Associate: normalize it with others","Ask for the next step","In that order"]},
+  {q:"How do you open a call, and how do you route standard vs high-value items?",concept:"Call opening and routing",kp:["Open with your name and the company, confirm they still want to come in","Listen for high-value triggers: gold, large amounts of silver","Standard items: route to send photos to your line","High-value items: go straight to scheduling","Get a photo before ending the call"]},
+  {q:"Explain the two-option close and why it works.",concept:"The two-option close",kp:["Offer two specific times, never whenever works","Removing open-ended choice raises the show rate"]},
+  {q:"How do you handle 'I researched it, it is worth X'?",concept:"The researched-price objection",kp:["Neither confirm nor deny their number","Explain online listings are asking prices, not what collectors actually pay","Then walk them through their specific items"]}
+ ],
+ 'm1.4':[
+  {q:"How do you self-review a call, and how often?",concept:"Daily self-review",kp:["Pick one recorded call at random each day","Score opening, listening, avatar read, framework, objections, photo, and close","Pick one specific thing to improve tomorrow"]},
+  {q:"Explain no-show recovery.",concept:"No-show recovery",kp:["Call back quickly, within about two hours","Acknowledge the miss, offer a new time, rebook","Try a few times before marking Reschedule/No-Show with a reason, or Lost"]},
+  {q:"When and how do you reactivate cold leads?",concept:"Cold lead reactivation",kp:["Work cold leads daily","Reach back out, especially with a fresh reason like a metal-price rise","Keep outreach within a sensible cap so it does not look like spam"]}
+ ],
+ 'm1.5':[
+  {q:"What do you do, and not do, during a buyer shadow?",concept:"Shadow conduct",kp:["Watch the buyer greet, profile, evaluate, handle objections, and close","Do not interrupt and keep your phone away","Note one thing you could not do yet and one setter-side improvement"]},
+  {q:"Explain the setter promotion gate.",concept:"The setter promotion gate",kp:["All gates must be true at once, held for two months","Consistency, accurate pipeline, strong show rate, a written test, and a recorded role-play","Leadership signs off on the data, not on tenure or relationships"]}
+ ],
+ 'm2.1':[
+  {q:"Explain mint marks and the rule for a possible rarity.",concept:"Mint marks and routing rarities",kp:["CC is Carson City, the rarest; route a CC Morgan to the numismatist","Value comes from rarity and condition, not age","When a coin might be a key date, set it aside and route it; never melt or guess"]},
+  {q:"Explain silver content by era.",concept:"Silver content by era",kp:["1964 and earlier dimes, quarters, halves are 90% silver","1965 to 1970 halves are 40% silver","War nickels 1942 to 1945 are 35% silver","Post-cutoff dimes and quarters, and post-1970 halves, are clad bank coins"]},
+  {q:"Explain the gold, silver, and platinum stamps and which to reject.",concept:"Precious metal stamps",kp:["10K=417, 14K=585, 18K=750, 22K=916","Sterling is .925, Sterling, or Ster; platinum is PT, Plat, or 950","Reject GF, GP, HGE, 1/10, 1/20 as filled or plated, not solid"]}
+ ],
+ 'm2.11':[
+  {q:"Explain how to price a coin that has no set price.",concept:"Pricing coins with no set price",kp:["Never price from memory or guess","Raw: eBay sold and completed, auction format, recently ended, similar condition","Graded: greysheet wholesale for the date and grade","Post to the pricing channel or route to the numismatist"]},
+  {q:"Which early and unusual coins should you flag?",concept:"Early coins to flag",kp:["Large cents, Flying Eagle and Indian Head keys, two-cent and three-cent pieces, half dimes, the twenty-cent piece, pre-1933 US gold","If you do not instantly know it, treat it as a lookup"]},
+  {q:"Why does condition matter so much on early coins?",concept:"Condition drives value",kp:["Condition swings these coins wildly; a cleaned or damaged coin is worth a fraction","Active listings are asking prices, not paid prices","When in doubt, route it"]}
+ ],
+ 'm2.2':[
+  {q:"Explain the test order and the magnet screen.",concept:"The test order",kp:["Magnet first, then scratch on jewelry only, then scale","Real gold, silver, and platinum are not magnetic","Test the chain or band body, not the clasp"]},
+  {q:"Explain the acid rule and the silver scratch reactions.",concept:"Acid rule and silver reactions",kp:["Never acid-test a coin; it destroys collector value","On silver, creamy or milky means real sterling; green or fizzing means plated","Acid jewelry only, stepping 10K, 14K, 18K"]},
+  {q:"How do you deduct so you pay for metal only?",concept:"Paying for metal only",kp:["Zero the scale before every batch","Deduct for stones (more for larger) and for a pocket watch's movement and glass","For weighted knife sets, weigh a fork or spoon and multiply"]}
+ ],
+ 'm2.7':[
+  {q:"Explain the pocket watch jewel tiers.",concept:"Pocket watch jewel tiers",kp:["7 jewels is a starter, lower value","15 to 20 is mid, about 50 to 100 dollars","21 and up is high end, about 100 to 500 dollars","A solid gold case has melt value regardless of brand"]},
+  {q:"Which watches do we buy vs skip?",concept:"Watch buy vs skip",kp:["Buy Rolex, Patek, Audemars Piguet, Omega, Cartier, Tudor, Breitling, TAG, IWC, Jaeger-LeCoultre","Skip Fossil, Michael Kors, Invicta, Guess, smartwatches, replicas, unless the case is solid gold","Route uncertain or vintage high-end watches to the specialist"]},
+  {q:"Explain the diamond 4 Cs and when to route.",concept:"Diamond 4 Cs and routing",kp:["Carat is weight, Cut is sparkle, Color is best at D, Clarity is best flawless with fewest inclusions","Handle small accent stones within the jewelry deal","Route loose, half-carat-and-up, or certified stones to the specialist"]}
+ ],
+ 'm2.12':[
+  {q:"Explain the rule for buying trading cards.",concept:"Buying cards",kp:["Buy only with proof of value, or route","Raw: eBay sold and completed auction comps in similar condition","Graded: sold comps for that card and grade, plus population","Never price from active listings or from memory"]},
+  {q:"Which cards should you flag?",concept:"Cards to flag",kp:["Baseball: T206 era, 1933 Goudey, 1950s Topps stars like the 1952 Mantle","Pokemon: WOTC 1999 to 2003 Base Set 1st Edition or Shadowless holo Charizard, and sealed product","Fakes are common; route anything suspicious"]},
+  {q:"Why do condition and sealed product matter?",concept:"Condition and sealed product",kp:["Condition (centering, corners, edges, surface) can multiply or gut value","Graded slabs from PSA, BGS, CGC, SGC give a verified grade","Never open sealed product; it destroys the value"]}
+ ],
+ 'm2.14':[
+  {q:"Explain the arrival flow for every customer.",concept:"Every arrival is a lead",kp:["Greet and sign them in first, before touching items","Check the CRM by name or phone","Open the existing lead or create one with name, phone, and items","Same flow in-store and at a roadshow"]},
+  {q:"Why update the lead stage after the appointment?",concept:"Closing the CRM loop",kp:["Set the stage to the real outcome (bought, consignment, low value, junk, lost)","A logged no-buy is a future follow-up; an unlogged arrival is gone forever"]}
+ ],
+ 'm2.3':[
+  {q:"Explain the deal sheet tabs and the MAX Face ceiling.",concept:"The deal sheet and the ceiling",kp:["Work only on the CALCULATOR tab; never alter the Show Totals page","MAX Face is the ceiling; negotiate up toward it but never above it","If they want more than MAX Face, pivot to consignment"]},
+  {q:"How do you enter a deal on the calculator?",concept:"Entering a deal",kp:["Amount is the count for coins and the weight in pennyweight (DWT) for metals","The sheet fills Face, Times Face, the row value, and MAX Face","Offer is what you present; Total Value is everything at MAX Face"]},
+  {q:"Why do metal prices change during the day?",concept:"Metal prices change hourly",kp:["Gold, silver, platinum MAX Face recalculates from spot, which updates every hour","Always use the current day's sheet; never quote metal from memory","Leadership keeps spot current, not the buyer"]}
+ ],
+ 'm2.15':[
+  {q:"Explain the three triage piles.",concept:"Triage first",kp:["Triage before going deep","Buy (clear precious metal, real silver coins), Route or look up (early or unusual coins, cards, significant or loose diamonds, uncertain watches), Reject or bulk (plated, costume, clad)","Then test the Buy and Route piles carefully"]},
+  {q:"Explain the quick screen.",concept:"The quick screen",kp:["Stamps first on jewelry: karat marks and .925 to Buy, GF/GP/HGE/EPNS to Reject","Magnet as a fast screen, coins by era","Costume by the pound, hand back clad; never toss an early coin into Reject"]}
+ ],
+ 'm2.13':[
+  {q:"Explain the check procedure.",concept:"Writing the check",kp:["Write only after the deal is agreed and the items verified","The exact agreed offer, in numbers and words","Payable to the name on the ID","Record the check number on the Final Count immediately"]},
+  {q:"When do you pause before paying?",concept:"Pausing before paying",kp:["More than MAX Face means pivot to consignment, not a bigger check","A 2500-plus deal about to walk means escalate first","Anything off about the ID means stop and get a second opinion"]}
+ ],
+ 'm2.8':[
+  {q:"Explain the difference between the CALCULATOR and Final Count pages.",concept:"Calculator vs Final Count",kp:["CALCULATOR builds the offer with the customer","Final Count records each closed deal: name, check number, amount spent, counts","They are two different pages"]},
+  {q:"How do you reconcile the day?",concept:"Reconciling the day",kp:["Log each deal the moment it closes, not from memory","Amount spent equals the check amount","At close, checks written and total spent must line up; find any mismatch before leaving"]}
+ ],
+ 'm2.4':[
+  {q:"Explain the 10-step framework and the first minute.",concept:"The 10-step framework",kp:["Ten steps, from Clarify why they came to Get their information","Much of the decision forms in the first minute; greet by name, avoid politics and religion","Run the evaluation openly where the customer can see it"]},
+  {q:"How do you deliver the price and handle the common objections?",concept:"Deliver and handle objections",kp:["State the price confidently, then go quiet","Pass-it-down (ask if the kids collect), spouse (include by phone), researched-price (asking not paid), without quoting their number","Feel, Felt, Found for emotional objections; if cash fails on a high-value item, pivot to consignment"]},
+  {q:"Explain the collector frame.",concept:"The collector frame",kp:["Present pricing through the collectors desk: photograph, send, offers back in about ten minutes","Never invent collector details; the honest version only","MAX Face still caps every deal, and cash today stays alive underneath"]}
+ ],
+ 'm2.16':[
+  {q:"Explain how to deliver an offer and close.",concept:"State the offer, then stop",kp:["Calm, certain tone signals a fair number","Anchor on value by showing how the number was built","State the offer and go silent; the next to speak is usually the customer","Talking past your own offer weakens it"]},
+  {q:"Explain the objection tree and when to pivot or escalate.",concept:"Handle, then return to the close",kp:["A matched response, not a discount, for each objection","Assume the sale once they lean in, then finish clean","Never exceed MAX Face; pivot to consignment when price is the wall","Escalate a 2500-plus deal about to walk"]}
+ ],
+ 'm2.9':[
+  {q:"Explain how to de-escalate an upset customer.",concept:"Staying calm",kp:["The goal is to stay calm and keep a path open, not to win","Lower your voice and slow down; never match their volume","Use transparency: the testing, the weights, the live sheet","Never argue, get defensive, or insult what they brought"]},
+  {q:"What do you do when they reject the price or turn hostile?",concept:"Price gap and hostility",kp:["Never go above MAX Face to please someone; pivot to the consignment pitch","A price objection moves the lead toward Sent to Consignment","If a customer becomes threatening, disengage, get a manager or security, and document it"]}
+ ],
+ 'm2.17':[
+  {q:"Explain the three escalation triggers and their actions.",concept:"The three escalation triggers",kp:["Unsure of anything: get a second opinion (another closer, the pricing channel, or the sales manager) before committing","No set price: look it up before pricing","A 2500-plus total-value deal about to walk: call the roadshow manager or another closer, then consignment if it still will not close"]},
+  {q:"Explain the standing escalation rules.",concept:"Standing escalation rules",kp:["Route rare or significant items to the numismatist or specialist regardless of size","Customer wants more than MAX Face: hold the ceiling and pivot to consignment","A confident wrong guess can cost more than the whole appointment"]}
+ ],
+ 'm2.10':[
+  {q:"Explain what consignment is and when to pitch it.",concept:"Consignment basics",kp:["We sell the item for the customer at auction; they keep ownership until it sells; bidding sets the price","Pitch it when they want more than MAX Face, the item is rare or high value, or the lead wants auction","Cash first, then consignment"]},
+  {q:"How do you pitch and set up a consignment?",concept:"Pitching and setting up consignment",kp:["Frame it as reaching collectors who compete; we handle photography, listing, and buyers","Set expectations honestly (price depends on bidding, it takes time); never overpromise","Set up by itemizing, signing the agreement, tagging and storing, and moving the lead to Sent to Consignment"]}
+ ],
+ 'm2.5':[
+  {q:"Explain how supervision works in supervised buying.",concept:"Supervised buying",kp:["Supervision steps down: manager at the table, then nearby, then solo","The manager steps in only to prevent a real mistake, never to take over","You learn by doing"]},
+  {q:"Explain the targets and why honest numbers matter.",concept:"Daily numbers",kp:["Close a strong share, keep deals within the rules, capture a review on every closed deal","Daily numbers are reviewed and checked against the records","Reporting must be honest"]}
+ ],
+ 'm2.6':[
+  {q:"Explain the Junior Purchaser promotion gate.",concept:"The JP promotion gate",kp:["All gates true at once, held two months: consistency, strong close rate and healthy deals, strong reviews, no rule issues, a clean records check","You must have helped train at least one setter","Leadership signs off on the numbers"]},
+  {q:"Why do the rules still apply when you buy solo?",concept:"Solo does not waive the rules",kp:["Escalation, MAX Face, and lookups all still apply solo","A random audit of your deals must show no rule issues","Never guess; look it up or route"]}
+ ],
+ 'm3a.1':[
+  {q:"Walk through the roadshow countdown.",concept:"The roadshow countdown",kp:["Two weeks out: confirm venue and room, brief marketing, set staffing, schedule equipment shipping","One week out: confirm marketing is live, supplies complete, test the camera and router kit","Three days out: pull the appointment count and escalate to marketing if low, print transaction sheets","One day out: set the room, router, cameras, tablet, scale, and photograph the setup"]},
+  {q:"Explain the room setup and why the setup photo matters.",concept:"Room setup and the setup photo",kp:["Customer table faces the door, a back table for stored items, sign-in tablet and signage visible at entry","The setup photo the day before is the first signal the show will run clean","Never skip the countdown steps"]}
+ ],
+ 'm3a.2':[
+  {q:"Explain the router setup order.",concept:"Router setup order",kp:["Connect the laptop to venue WiFi first and confirm internet works","Then the travel router's own network and its admin page, and select the venue WiFi","Let cameras and tablet join; keep the router on wall power and connect devices by WiFi, not cable"]},
+  {q:"Explain the camera coverage rule.",concept:"Camera coverage",kp:["Cover the scale, both sides of the customer table, the back table, and the entry","Confirm every camera is live before opening","If a camera is down, pause until it is fixed; running without full coverage is not allowed"]},
+  {q:"Explain the shipping rules.",concept:"Shipping rules",kp:["Cap each box at the set maximum value","Tape bottom, middle, overlap the ends; label city, state, and box number","No breakables or recently made firearms; ship comics and cards separately and flat; record the tracking number"]}
+ ],
+ 'm3a.3':[
+  {q:"Explain how you approve deals on the floor.",concept:"Deal approval on the floor",kp:["Approve deals that stay within the pricing rules; document a borderline one with a likely-return customer","Reject rule-breaking and pivot to consignment","Route rare items to the specialist regardless of size; send above-authority deals up to leadership"]},
+  {q:"How do you handle disputes and close the show?",concept:"Disputes and closing the show",kp:["Settle disputes calmly using the camera footage, not argument","On busy days, greet and set honest wait times; document incidents in the team channel","Close by stopping new customers, final count, ship with tracking, settle the venue, post a summary"]}
+ ],
+ 'm3a.4':[
+  {q:"Explain the simple show P&L.",concept:"The roadshow P&L",kp:["Revenue is the resale value of everything bought","Cost of goods is what you paid sellers; gross profit is revenue minus cost of goods","Net result is gross profit minus direct expenses (venue, marketing, payroll, travel, supplies, shipping)","Flag expenses that run well over budget"]},
+  {q:"Explain the after-action review.",concept:"The after-action review",kp:["Written within a day or two, while fresh","What worked, what did not with the real reason, anything unusual, and recommendations, plus the P&L summary","Honest reporting, including what went wrong, feeds the next show"]}
+ ],
+ 'm3a.5':[
+  {q:"Explain the roadshow manager promotion gate.",concept:"Roadshow manager promotion gate",kp:["Two solo shows back to back hitting the net result target","Full camera coverage, strong reviews, and clean shipping each show","Consistent time, healthy margins, no rule or compliance issues","Leadership certifies on the numbers and the after-action reviews; it is repeatable consistency, not one good day"]}
+ ],
+ 'm3b.1':[
+  {q:"Walk through the daily open.",concept:"The daily open",kp:["Disarm the alarm, lights and air on","Power cameras, scale, monitor, printer, tablet and confirm cameras are live","Confirm yesterday's close reconciled, print sheets, stock the customer area","Unlock inventory and confirm the count matches, then post an open confirmation"]},
+  {q:"Explain the daily close and walk-in flow.",concept:"The daily close and walk-in flow",kp:["Stop new appointments before closing, final count reconciled to zero, lock inventory (cameras keep running), arm the alarm, post the close with the final count","Greet and sign in walk-ins, protect scheduled appointments, set an honest wait time","Ship out on schedule and when on-site value reaches the cap"]}
+ ],
+ 'm3b.2':[
+  {q:"Explain how you keep reviews and online presence strong.",concept:"Reviews and online presence",kp:["Post to the business profile on a regular weekly schedule using marketing's content","Ask for a review in person on every closed deal, and follow up by message if missed","Volume of named reviews keeps the rating strong"]},
+  {q:"Explain how to handle a bad review.",concept:"Handling a bad review",kp:["A low review alerts you and leadership quickly","Look up the customer, draft a calm response, and get leadership's approval before posting","Then call the customer to make it right; never post a public response without leadership's approval"]}
+ ],
+ 'm3b.3':[
+  {q:"Explain the office daily numbers and the pricing-input rule.",concept:"Office numbers and pricing inputs",kp:["Capture revenue, cost of goods, gross profit, expenses, and net result, and post a short summary","Spot prices and rules are set by leadership; you confirm they are current but never change them","If a price looks wrong, raise it, do not edit it"]},
+  {q:"Explain how pay is prepared.",concept:"Preparing pay",kp:["Prepare each buyer's pay from their results at the end of the period","Submit it to leadership for approval before it is paid","Accuracy is critical; mistakes here break trust"]}
+ ],
+ 'm3b.4':[
+  {q:"Explain hiring setters and the authority limits.",concept:"Hiring setters and authority limits",kp:["Post, screen, and interview with a short role-play to see how they handle a real call","A final setter offer needs leadership sign-off","You can hire setters with sign-off, but hiring or removing buyers and above stays with leadership"]},
+  {q:"Explain one-on-ones and handling underperformance.",concept:"One-on-ones and underperformance",kp:["Weekly about-30-minute one-on-one: review numbers, coach one skill, one role-play, set next week's focus, short note","Missing targets for two weeks means a written improvement plan with specific goals and a timeframe","If it is not met, move to removal, reviewed by leadership"]}
+ ],
+ 'm3b.5':[
+  {q:"Explain the office manager promotion gate.",concept:"Office manager promotion gate",kp:["Run the office solo for two months, hitting the net result target both months","A strong rating, clean records, a healthy team, and no compliance issues","You must have begun training a possible successor","Leadership certifies on the numbers"]}
+ ]
+};
+const SHORT_PASS=85;
+function hasShort(id){return !!(SHORT[id]&&SHORT[id].length);}
+function shortQuotaFor(id){const n=hasShort(id)?SHORT[id].length:0;return Math.min(3,n||3);}
+function shortPassedIdx(p,id){return (p&&p.short&&p.short[id]&&Array.isArray(p.short[id].passed))?p.short[id].passed:[];}
+function shortCleared(p,id){return hasShort(id)&&shortPassedIdx(p,id).length>=shortQuotaFor(id);}
 function hasExplain(id){return !!EXPLAIN[id];}
 function explainPassedIdx(p,id){return (p&&p.explain&&p.explain[id]&&Array.isArray(p.explain[id].passed))?p.explain[id].passed:[];}
 function explainCleared(p,id){return explainPassedIdx(p,id).length>=explainQuotaFor(id);}
@@ -933,16 +1088,90 @@ function certId(name,id,ts){
   const d=new Date(ts);
   return 'CSA-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+'-'+short;
 }
-function certifyModule(p,id,by){
+function certifyModule(p,id,by,board){
   const rec=p.modules[id]||{status:'available',best:0,attempts:0};
   if(rec.status!=='passed')rec.status='passed';
   const at=Date.now();
   rec.signoff={by:by,at:at,loc:getLocation(),cert:certId(p.name||'',id,at)};
+  if(board)rec.signoff.board=board;
   p.modules[id]=rec;p.log=p.log||[];
-  p.log.push({type:'signoff',id:id,by:by,ts:at,loc:rec.signoff.loc,cert:rec.signoff.cert});
+  p.log.push({type:'signoff',id:id,by:by,ts:at,loc:rec.signoff.loc,cert:rec.signoff.cert,board:board?true:false});
   ensureCompletion(p);persist(p);
   notifySignoff(p,id,rec.signoff);
 }
+/* ---- Oral board: optional structured sign-off (sits beside the one-click sign-off) ---- */
+let boardState=null;
+function runBoard(scope,n,id){
+  const t=getTrainees();const p=normalize(t[n]);if(!p){alert('Trainee not found.');return;}
+  if(!isTestPassed(p,id)){alert('That module has not passed its written test yet.');return;}
+  if(!explainReady(p,id)){alert('That module still needs the explain drill ('+explainQuotaFor(id)+' different questions passed) before the board.');return;}
+  const {mod}=findModule(id);
+  const prompts=(EXPLAIN[id]&&Array.isArray(EXPLAIN[id].prompts)&&EXPLAIN[id].prompts.length)?EXPLAIN[id].prompts.slice(0,5):['Overall competency on this module, per the check below'];
+  boardState={scope:scope==='admin'?'admin':'manager',n:n,id:id,comp:(mod&&mod.comp)||'',qs:prompts.map(q=>({q:q,rating:null,probe:''})),notes:''};
+  renderBoard();
+}
+function renderBoard(){
+  const s=boardState;if(!s)return;
+  const {tier,mod}=findModule(s.id);
+  const rows=s.qs.map((it,i)=>{
+    const sel=r=>it.rating===r?'btn-gold':'btn-ghost';
+    return `<div class="standard" style="margin-top:0;margin-bottom:10px">
+      <div style="margin-bottom:8px">${i+1}. ${esc(it.q)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ${sel('strong')}" style="padding:4px 12px;font-size:13px" onclick="boardRate(${i},'strong')">Strong</button>
+        <button class="btn ${sel('ok')}" style="padding:4px 12px;font-size:13px" onclick="boardRate(${i},'ok')">OK</button>
+        <button class="btn ${sel('weak')}" style="padding:4px 12px;font-size:13px" onclick="boardRate(${i},'weak')">Weak</button>
+        ${drillReady()?`<button class="btn btn-ghost" style="padding:4px 12px;font-size:13px" onclick="boardProbe(${i})">Ask a follow-up</button>`:''}
+      </div>
+      ${it.probe?`<div class="dmodel" style="margin-top:8px"><b>Follow-up to ask:</b> ${esc(it.probe)}</div>`:''}
+    </div>`;
+  }).join('');
+  const anyWeak=s.qs.some(x=>x.rating==='weak');
+  const allRated=s.qs.every(x=>x.rating);
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(tier.name)} &middot; Oral board</div><h1>${esc(mod.name)}</h1></div>
+    <button class="btn btn-ghost" onclick="boardExit()">Cancel</button></div>
+    <div class="standard" style="margin-top:0"><b>Run this live, one-on-one.</b><br>Have the trainee perform the check below, then rate each point. A single <b>Weak</b> blocks certification: coach it and re-board later. This board is optional; the quick Sign off button still works for a simple pass.</div>
+    ${s.comp?`<div class="standard"><b>Competency check for this module</b><br>${esc(s.comp)}</div>`:''}
+    <h2 style="margin-top:18px">Rate each point</h2>
+    ${rows}
+    <div class="standard"><b>Board notes (required)</b>
+      <textarea id="boardnotes" class="dinput" rows="3" style="width:100%;box-sizing:border-box;margin-top:6px" placeholder="What you observed, strengths, anything to watch.">${esc(s.notes)}</textarea></div>
+    <div id="boarderr" class="lesson-note" style="color:#e0a06a;min-height:16px;margin:6px 2px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn ${(!anyWeak&&allRated)?'btn-gold':'btn-ghost'}" onclick="boardSubmit()">Certify this module</button>
+      <button class="btn btn-ghost" onclick="boardExit()">Cancel</button></div>
+    ${anyWeak?'<div class="lesson-note" style="color:#e0a06a;margin-top:8px">At least one point is Weak, so this cannot be certified yet.</div>':''}</div>`;
+  window.scrollTo(0,0);
+}
+function boardRate(i,r){const s=boardState;if(!s||!s.qs[i])return;const nt=document.getElementById('boardnotes');if(nt)s.notes=nt.value;s.qs[i].rating=r;renderBoard();}
+function boardProbe(i){
+  const s=boardState;if(!s||!s.qs[i])return;if(!drillReady())return;
+  const nt=document.getElementById('boardnotes');if(nt)s.notes=nt.value;
+  const {mod}=findModule(s.id);
+  s.qs[i].probe='...';renderBoard();
+  drillAPI('probe',{point:s.qs[i].q,concept:(mod?mod.name:s.id)})
+    .then(r=>{s.qs[i].probe=(r&&r.question)?r.question:'';renderBoard();})
+    .catch(()=>{s.qs[i].probe='';renderBoard();});
+}
+function boardSubmit(){
+  const s=boardState;if(!s)return;
+  const nt=document.getElementById('boardnotes');if(nt)s.notes=nt.value;
+  const err=document.getElementById('boarderr');
+  if(!s.qs.every(x=>x.rating)){if(err)err.textContent='Rate every point before certifying.';return;}
+  if(s.qs.some(x=>x.rating==='weak')){if(err)err.textContent='A Weak rating blocks certification. Coach it and re-board.';return;}
+  if(!s.notes||s.notes.trim().length<3){if(err)err.textContent='Board notes are required.';return;}
+  const code=prompt('Manager passcode to certify this module:');if(code===null)return;
+  if(code!==getMgrPass()&&code!==getAdminPass()){alert('Incorrect passcode.');return;}
+  const by=prompt('Your name (recorded with this sign-off):');if(by===null)return;
+  if(by.trim().length<2){alert('A name is required to sign off.');return;}
+  const t=getTrainees();const p=normalize(t[s.n]);if(!p){alert('Trainee not found.');return;}
+  const board={by:by.trim(),at:Date.now(),notes:s.notes.trim(),questions:s.qs.map(x=>({q:x.q,rating:x.rating}))};
+  certifyModule(p,s.id,by.trim(),board);
+  const scope=s.scope,n=s.n;boardState=null;
+  if(scope==='manager')renderMgrTrainee(n);else renderDetail(n);
+}
+function boardExit(){const s=boardState;if(!s)return;const scope=s.scope,n=s.n;boardState=null;if(scope==='manager')renderMgrTrainee(n);else renderDetail(n);}
 /* ---- sign-off alerts ---- */
 const HOOK_STORE='sa_hook_v1';
 function getHook(){return load(HOOK_STORE,{url:'',email:''});}
@@ -996,7 +1225,7 @@ function stats(p){const total=flatModules().length;let passed=0;CURRICULUM.forEa
 function getTrainees(){return load(STORE.trainees,{});}
 function saveTrainees(t){save(STORE.trainees,t);}
 function currentName(){return load(STORE.current,null);}
-function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};p.explain=p.explain||{};p.unlocked=p.unlocked||{};
+function normalize(p){if(!p)return p;p.modules=p.modules||{};p.finals=p.finals||{};p.signoff=p.signoff||{tier3a:false,tier3b:false};p.log=p.log||[];p.drills=p.drills||{};p.explain=p.explain||{};p.short=p.short||{};p.unlocked=p.unlocked||{};
   Object.keys(p.drills).forEach(k=>{const d=p.drills[k];if(d&&!Array.isArray(d.passed))d.passed=[];});
   if(!p.lastActivity)p.lastActivity=p.created||Date.now();return p;}
 function currentProgress(){const t=getTrainees();const n=currentName();return n&&t[n]?normalize(t[n]):null;}
@@ -1014,6 +1243,7 @@ function renderTopbar(){
     <button class="btn btn-ghost" onclick="renderStudyPick()">Study</button>
     <button class="btn btn-ghost" onclick="renderPlaybook()">Playbook</button>
     <button class="btn btn-ghost" onclick="renderQuizSetup()">Quiz</button>
+    <button class="btn btn-ghost" onclick="renderShortTab()">Short Answer</button>
     <button class="btn btn-ghost" onclick="renderBest()">Best Calls${getBest().length?' ('+getBest().length+')':''}</button>
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>`:'';
 }
@@ -1464,7 +1694,7 @@ function renderBest(){
   const pinned=a.filter(x=>x.pinned), rest=a.filter(x=>!x.pinned);
   const card=e=>{
     const when=new Date(e.ts).toLocaleDateString();
-    const kind=e.kind==='explain'?'Explain':'Call';
+    const kind=e.kind==='explain'?'Explain':(e.kind==='short'?'Short answer':'Call');
     return `<div class="standard" style="margin-top:0;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <div><b>${esc(e.title)}</b> <span class="pill pill-g">${e.score}</span> ${e.pinned?'<span class="pill pill-a">pinned</span>':''}
@@ -1569,6 +1799,10 @@ function renderDrillScore(r){
     ${weakBlock}
     <details style="margin-top:14px"><summary style="cursor:pointer;color:var(--gold-bright)">Read the full transcript</summary>
       <div style="white-space:pre-wrap;margin-top:8px;font-size:14px;line-height:1.6">${esc(drillTranscript(s))}</div></details>
+    <div class="standard" style="margin-top:14px"><b>See this call done right</b>
+      <div class="lesson-note" style="margin:4px 0 8px">Watch your own call rewritten the way a master closer would run it, same customer, stronger moves.</div>
+      <div id="dbrw"></div>
+      <div style="margin-top:8px"><button class="btn btn-ghost" onclick="rewriteCall()">Rewrite my call</button></div></div>
     <div class="standard" style="margin-top:14px"><b>Ask about this call</b>
       <div class="lesson-note" style="margin:4px 0 8px">Not sure why you missed a step, or what to say next time? Ask the coach about this exact call.</div>
       <div id="dbchat"></div>
@@ -1596,6 +1830,14 @@ function askDebrief(){
   drillAPI('debrief_chat',{transcript:DBRIEF.transcript,beats:DBRIEF.beats,scenario:DBRIEF.scenario,persona:DBRIEF.persona,question:q,history:DBRIEF.history.slice(0,-1)})
     .then(r=>{DBRIEF.busy=false;DBRIEF.history.push({role:'assistant',content:r.answer||'No answer came back. Try rephrasing.'});renderDbChat();})
     .catch(err=>{DBRIEF.busy=false;DBRIEF.history.push({role:'assistant',content:'Could not reach the coach: '+err.message});renderDbChat();});
+}
+function rewriteCall(){
+  const box=document.getElementById('dbrw');if(!box||!DBRIEF)return;
+  if(!drillReady()){box.innerHTML='<div class="lesson-note" style="color:#e0a06a">The practice server is not connected, so the rewrite cannot run.</div>';return;}
+  box.innerHTML='<div class="lesson-note">Rewriting your call...</div>';
+  drillAPI('debrief',{transcript:DBRIEF.transcript,scenario:DBRIEF.scenario,persona:DBRIEF.persona})
+    .then(r=>{box.innerHTML='<div style="white-space:pre-wrap;margin-top:6px;font-size:14px;line-height:1.6">'+esc(r.reply||'No rewrite came back. Try again.')+'</div>';})
+    .catch(err=>{box.innerHTML='<div class="lesson-note" style="color:#e0a06a">Could not reach the server: '+esc(err.message)+'</div>';});
 }
 function drillExit(){const id=drillState?drillState.id:null;if(drillState&&drillState.listening){drillState.listening=false;try{drillRec&&drillRec.stop();}catch(e){}drillRec=null;}drillState=null;try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}if(id)openModule(id);else goDash();}
 
@@ -1705,6 +1947,124 @@ function renderExplainScore(r,sc){
 }
 function explainExit(){const id=explainState?explainState.id:null;if(explainState&&explainState.listening){explainState.listening=false;try{explainRec&&explainRec.stop();}catch(e){}explainRec=null;}explainState=null;if(previewMode){if(id)openModulePreview(id);else renderPreviewLadder();}else if(id)openModule(id);else goDash();}
 
+// ===== SHORT ANSWER DRILL (one concept, graded 0-100, passes at 85) =====
+let shortState=null,shortRec=null;
+function startShort(id){
+  if(!hasShort(id))return;
+  if(!drillReady()){alert('The AI practice server is not set up yet. An administrator can add it in Administrator settings.');return;}
+  const p=previewMode?null:currentProgress();
+  const passed=shortPassedIdx(p,id);
+  const order=shuffle(SHORT[id].map((_,i)=>i));
+  let idx=order.find(i=>passed.indexOf(i)===-1);if(idx===undefined)idx=order[0];
+  shortState={id,idx,busy:false,listening:false,dictBase:'',dictFinal:''};
+  renderShort();
+}
+function renderShort(){
+  const s=shortState;if(!s)return;
+  const item=SHORT[s.id][s.idx];
+  const p=previewMode?null:currentProgress();
+  const count=shortPassedIdx(p,s.id).length;
+  const {tier,mod}=findModule(s.id);
+  const v=voiceSupported();
+  app.innerHTML=`<div class="fade">
+    <div class="admin-head"><div><div class="crumb">${esc(tier.name)} ${previewMode?'(preview)':''}</div><h1>Short Answer: ${esc(mod.name)}</h1></div>
+    <button class="btn btn-ghost" onclick="shortExit()">Back to module</button></div>
+    <div class="passbar">${previewMode?'Preview mode: nothing is recorded. ':''}One concept at a time, graded for completeness. Pass ${shortQuotaFor(s.id)} different concepts at ${SHORT_PASS} or higher. ${count} of ${shortQuotaFor(s.id)} passed.</div>
+    <div class="standard" style="margin-top:0"><b>Concept: ${esc(item.concept)}</b><br>${esc(item.q)}</div>
+    <div class="lesson-note" style="margin:8px 2px">Answer in your own words, but cover the whole idea. This one is stricter than the explain drill: a partial answer will not pass.</div>
+    <textarea id="sinput" class="dinput" rows="6" style="width:100%;box-sizing:border-box;min-height:130px" placeholder="Speak or type your answer here..."></textarea>
+    <div id="serr" class="lesson-note" style="color:#e0a06a;min-height:16px;margin:6px 2px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+      ${v?`<button class="btn btn-ghost" id="smic" onclick="shortMic()">Tap to talk</button>`:''}
+      <button class="btn btn-ghost" onclick="shortNew()">New concept</button>
+      <button class="btn btn-gold" onclick="shortSubmit()">Submit my answer</button>
+    </div></div>`;
+  window.scrollTo(0,0);
+}
+function shortNew(){
+  const s=shortState;if(!s)return;
+  if(s.listening){s.listening=false;try{shortRec&&shortRec.stop();}catch(e){}shortRec=null;}
+  const p=previewMode?null:currentProgress();const passed=shortPassedIdx(p,s.id);
+  let order=shuffle(SHORT[s.id].map((_,i)=>i)).filter(i=>i!==s.idx);
+  if(!order.length)order=[s.idx];
+  let idx=order.find(i=>passed.indexOf(i)===-1);if(idx===undefined)idx=order[0];
+  s.idx=idx;s.dictBase='';s.dictFinal='';renderShort();
+}
+function shortStartRec(){
+  const s=shortState;const SRr=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SRr||!s)return;
+  const rec=new SRr();rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;shortRec=rec;
+  rec.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)s.dictFinal+=r[0].transcript+' ';else interim+=r[0].transcript;}const di=document.getElementById('sinput');if(di)di.value=(s.dictBase+s.dictFinal+interim).replace(/\s+/g,' ').replace(/^\s+/,'');};
+  rec.onend=()=>{if(s.listening){try{shortStartRec();}catch(e){}}};
+  rec.onerror=()=>{};
+  try{rec.start();}catch(e){}
+}
+function shortMic(){
+  const s=shortState;if(!s)return;const SRr=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SRr)return;
+  const b=document.getElementById('smic');
+  if(s.listening){s.listening=false;try{shortRec&&shortRec.stop();}catch(e){}shortRec=null;if(b)b.textContent='Tap to talk';return;}
+  const di=document.getElementById('sinput');s.dictBase=(di&&di.value)?di.value.replace(/\s+$/,'')+' ':'';s.dictFinal='';s.listening=true;if(b)b.textContent='Listening, tap to stop';shortStartRec();
+}
+function shortSubmit(){
+  const s=shortState;if(!s||s.busy)return;
+  if(s.listening){s.listening=false;try{shortRec&&shortRec.stop();}catch(e){}shortRec=null;}
+  const di=document.getElementById('sinput');const ans=(di?di.value:'').trim();
+  if(!ans){const se=document.getElementById('serr');if(se)se.textContent='Say or type your answer before submitting.';return;}
+  const item=SHORT[s.id][s.idx];
+  s.busy=true;app.innerHTML=`<div class="fade"><h1>Checking your answer...</h1><div class="standard">Grading it against the key points for this concept.</div></div>`;
+  drillAPI('short',{question:item.q,concept:item.concept,answer:ans,kp:item.kp})
+    .then(r=>{const sc=Math.max(0,Math.min(100,Math.round(Number(r.score)||0)));logShort(s.id,s.idx,sc,ans);renderShortScore(r,sc);})
+    .catch(err=>{s.busy=false;app.innerHTML=`<div class="fade"><h1>Check failed</h1><div class="standard">${esc(err.message)}</div><button class="btn btn-gold" onclick="renderShort()">Back to the question</button></div>`;});
+}
+function logShort(id,idx,sc,answer){
+  if(previewMode)return;const p=currentProgress();if(!p)return;
+  p.short=p.short||{};const e=p.short[id]||{passed:[],attempts:0,best:0};
+  e.passed=Array.isArray(e.passed)?e.passed:[];e.attempts=(e.attempts||0)+1;e.best=Math.max(e.best||0,sc);
+  if(sc>=SHORT_PASS&&e.passed.indexOf(idx)===-1)e.passed.push(idx);
+  p.short[id]=e;p.log=p.log||[];p.log.push({type:'short',id,idx,score:sc,ts:Date.now()});
+  p.lastActivity=Date.now();persist(p);
+  if(sc>=BEST_MIN&&answer&&SHORT[id]){
+    const {mod}=findModule(id);
+    bestAdd({id:'b'+Date.now()+Math.floor(Math.random()*1000),kind:'short',score:sc,who:currentName()||'Trainee',
+      title:(mod?mod.name:id),persona:'',transcript:'Concept: '+SHORT[id][idx].concept+'\n\nQuestion: '+SHORT[id][idx].q+'\n\nAnswer: '+answer,ts:Date.now(),pinned:false,note:''});
+  }
+}
+function renderShortScore(r,sc){
+  const s=shortState;s.busy=false;
+  const pts=Array.isArray(r.beats)?r.beats:[];
+  const rows=pts.map(pt=>{
+    const st=pt.state==='hit'?'hit':(pt.state==='partial'?'partial':'miss');
+    const pill=st==='hit'?'<span class="pill pill-g">got it</span>':(st==='partial'?'<span class="pill pill-a">partial</span>':'<span class="pill pill-l">missed</span>');
+    const said=pt.said?`<div class="lesson-note">You said: ${esc(pt.said)}</div>`:'';
+    const better=(st!=='hit'&&pt.example)?`<div class="dmodel"><b>Stronger answer:</b> ${esc(pt.example)}</div>`:'';
+    return `<tr><td style="width:64px">${pill}</td><td>${said}${better}${(!said&&!better)?'<span class="lesson-note">key point</span>':''}</td></tr>`;
+  }).join('');
+  const passed=sc>=SHORT_PASS;
+  const p=previewMode?null:currentProgress();const count=shortPassedIdx(p,s.id).length;
+  const ring=passed?'#7fd3a5':(sc>=60?'#d9b84a':'#e0a06a');
+  const done=count>=shortQuotaFor(s.id);
+  app.innerHTML=`<div class="fade"><div class="admin-head"><h1>Answer Scored</h1><button class="btn btn-gold" onclick="shortExit()">Back to module</button></div>
+    <div class="dscorehead"><div class="dscorenum" style="color:${ring}">${sc}</div><div><div style="font-weight:700">${passed?'Passed this concept':'Not yet, you need '+SHORT_PASS}</div><div class="lesson-note">${done?'You have cleared the practice target for this module.':count+' of '+shortQuotaFor(s.id)+' different concepts passed'}</div></div></div>
+    ${r.note?`<div class="standard"><b>Coach's note:</b> ${esc(r.note)}</div>`:''}
+    ${rows?`<div class="table-wrap"><table>${rows}</table></div>`:''}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      ${done?'':`<button class="btn btn-gold" onclick="shortNew()">Next concept</button>`}
+      <button class="btn btn-ghost" onclick="shortExit()">Done</button></div></div>`;
+  window.scrollTo(0,0);
+}
+function shortExit(){const id=shortState?shortState.id:null;if(shortState&&shortState.listening){shortState.listening=false;try{shortRec&&shortRec.stop();}catch(e){}shortRec=null;}shortState=null;if(previewMode){if(id)openModulePreview(id);else renderPreviewLadder();}else if(id)openModule(id);else goDash();}
+// mixed short-answer practice across every module that has content (study only)
+function renderShortTab(){
+  const mods=[];CURRICULUM.forEach(t=>t.modules.forEach(m=>{if(hasShort(m.id))mods.push({tier:t,mod:m});}));
+  let list=mods.map(x=>`<div class="standard" style="margin-top:0;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div><b>${esc(x.mod.name)}</b> <span class="lesson-note">${SHORT[x.mod.id].length} concept${SHORT[x.mod.id].length===1?'':'s'}</span></div>
+      <button class="btn btn-gold" onclick="startShort('${x.mod.id}')">Practice</button></div>`).join('');
+  app.innerHTML=`<div class="fade"><div class="admin-head"><div><div class="crumb">Study</div><h1>Short Answer Practice</h1></div>
+    <button class="btn btn-ghost" onclick="goDash()">Back</button></div>
+    <div class="standard" style="margin-top:0">Practice explaining one concept at a time in your own words. Graded strictly for completeness, so it is the best way to be ready for a manager's questions. Nothing here is required to certify, it is for study.</div>
+    ${list||'<div class="lesson-note" style="margin-top:14px">Short-answer practice is being added module by module. Check back soon.</div>'}</div>`;
+  window.scrollTo(0,0);
+}
+
 let previewMode=false,previewFrom='admin';
 function startPreview(from){previewMode=true;previewFrom=from||'admin';renderPreviewLadder();}
 function exitPreview(){previewMode=false;if(previewFrom==='manager')renderManager();else renderAdmin();}
@@ -1735,6 +2095,7 @@ function openModulePreview(id){
         ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
         ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
         ${hasExplain(id)?`<button class="btn btn-ghost" onclick="startExplain('${id}')">Explain Drill</button>`:''}
+        ${hasShort(id)?`<button class="btn btn-ghost" onclick="startShort('${id}')">Short Answer</button>`:''}
         <button class="btn btn-gold" onclick="startTest('${id}',true)">Take the Test</button>
       </div></div></div>`;
   window.scrollTo(0,0);
@@ -1765,6 +2126,14 @@ function openModule(id){
       ${drillReady()?'':'<div class="lesson-note" style="color:#e0a06a;margin-top:8px">The practice server is not connected, so the explain drill cannot run yet. Everything else on this module still works. Ask an administrator to connect it in Administrator settings.</div>'}
       <div style="margin-top:10px"><button class="btn ${drillReady()?'btn-gold':'btn-ghost'}" onclick="startExplain('${id}')">${exCount>0?'Continue explain drill':'Start explain drill'}</button></div></div>`;
   }
+  let shortPanel='';
+  if(hasShort(id)){
+    const sCount=shortPassedIdx(p,id).length, sDone=shortCleared(p,id);
+    shortPanel=`<div class="standard"><b>Short answer practice</b><br>
+      One concept at a time, graded strictly for completeness at ${SHORT_PASS} or higher. This is the best way to prepare for a manager's questions. Practice only, not required to certify. ${sDone?'<span class="pill pill-g">target met</span>':`<span class="pill pill-l">${sCount} of ${shortQuotaFor(id)} concepts passed</span>`}
+      ${drillReady()?'':'<div class="lesson-note" style="color:#e0a06a;margin-top:8px">The practice server is not connected, so short answer cannot run yet.</div>'}
+      <div style="margin-top:10px"><button class="btn ${drillReady()?'btn-gold':'btn-ghost'}" onclick="startShort('${id}')">${sCount>0?'Continue short answer':'Start short answer'}</button></div></div>`;
+  }
   app.innerHTML=`<div class="lesson fade">
     <div class="crumb">${tier.name}</div>
     <h1>${mod.name}</h1>
@@ -1773,6 +2142,7 @@ function openModule(id){
     <div class="lesson-card">${mod.lessonHTML}</div>
     ${practicePanel}
     ${explainPanel}
+    ${shortPanel}
     <div class="lesson-actions">
       <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2279,7 +2649,7 @@ function renderDetail(n){
     t.modules.forEach(m=>{const rec=p.modules[m.id];const s=status[m.id];
       const pill=s==='certified'?'pill-g':(s==='locked'?'pill-l':'pill-a');
       let action='';
-      if(s==='awaiting')action=`<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="adminSignOff('${esn}','${m.id}')">Sign off</button>`;
+      if(s==='awaiting')action=`<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="adminSignOff('${esn}','${m.id}')">Sign off</button> <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="runBoard('admin','${esn}','${m.id}')">Oral board</button>`;
       else if(s==='certified'&&rec&&rec.signoff)action=`signed by ${esc(rec.signoff.by)}${rec.signoff.loc?' at '+esc(rec.signoff.loc):''}<div class="lesson-note">${esc(rec.signoff.cert||'')}</div>`;
       modRows+=`<tr><td>${esc(m.name)}</td><td><span class="pill ${pill}">${s}</span></td><td>${rec?rec.best+'%':'-'}</td><td>${rec?rec.attempts:0}</td><td>${action}</td></tr>`;});
     const fr=p.finals[t.id];const fs=finalStatus(p,t.id);
@@ -2305,7 +2675,30 @@ function resetTrainee(n){if(!confirm('Reset all progress for '+n+'?'))return;con
 function changeAdminPass(){const np=prompt('New administrator passcode:');if(np&&np.length>=4){save(STORE.admin,np);alert('Admin passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
 function changeMgrPass(){const np=prompt('New manager passcode:');if(np&&np.length>=4){save(MGR_STORE,np);alert('Manager passcode updated.');}else if(np!==null)alert('Passcode must be at least 4 characters.');}
 function saveDrillCfg(){const url=(document.getElementById('durl').value||'').trim();const pass=(document.getElementById('dpass').value||'').trim();setDrillCfg({url,pass});renderAdmin();}
-function testDrill(){const out=document.getElementById('dtest');if(out)out.textContent='Testing...';drillAPI('chat',{persona:DRILL_PERSONAS[0],opening:DRILL_PERSONAS[0].opening,script:'Connection test',messages:[{role:'user',content:'Hello, this is a connection test.'}]}).then(r=>{if(out)out.textContent=(r&&r.reply)?'Connected. The server replied.':'Reached the server but got an unexpected response.';}).catch(err=>{if(out)out.textContent='Failed: '+err.message;});}
+// Modes the app relies on. Test connection uses ping (no AI call) and reports any the proxy is missing,
+// so an app/proxy version mismatch is caught instantly instead of surfacing as a broken feature later.
+const NEEDED_MODES=['ping','chat','score','knowledge','short','quiz','probe','debrief','debrief_chat','coach'];
+function testDrill(){
+  const out=document.getElementById('dtest');
+  if(!drillReady()){if(out)out.textContent='Enter the practice server URL and passcode, then Save, before testing.';return;}
+  if(out)out.textContent='Testing...';
+  drillAPI('ping',{}).then(r=>{
+    if(!out)return;
+    if(!r||!r.ok){out.textContent='Reached the server but got an unexpected response. Make sure the latest drill.js is deployed.';return;}
+    const have=Array.isArray(r.modes)?r.modes:[];
+    const missing=NEEDED_MODES.filter(m=>have.indexOf(m)===-1);
+    if(missing.length===0){
+      out.textContent='Connected. Proxy '+(r.version||'?')+', all '+NEEDED_MODES.length+' modes present, model '+(r.model||'?')+'.';
+    }else{
+      out.textContent='Connected but OUTDATED. Proxy '+(r.version||'?')+' is missing: '+missing.join(', ')+'. Deploy the latest drill.js to enable those features.';
+    }
+  }).catch(err=>{
+    const m=String(err.message||err);
+    if(/40*1|Bad passcode/i.test(m)){if(out)out.textContent='Wrong passcode. The passcode here must match DRILL_PASSCODE in Vercel.';}
+    else if(/Unknown mode/i.test(m)){if(out)out.textContent='Connected but OUTDATED: the proxy does not support the ping handshake. Deploy the latest drill.js.';}
+    else{if(out)out.textContent='Unreachable: '+m+'. Check the URL and that the Vercel deploy is green.';}
+  });
+}
 function csvFor(p){
   let rows=[['Type','Name','Status','Best Score','Attempts','Last Attempt','Certified By','Certified At']];
   CURRICULUM.forEach(t=>{t.modules.forEach(m=>{const rec=p.modules[m.id];
@@ -2360,7 +2753,8 @@ function renderMgrTrainee(n){
     awaitingCards+=`<div class="standard" style="margin-top:0;margin-bottom:14px"><b>${esc(m.name)}</b> <span class="pill pill-a">awaiting sign-off</span>
       <div style="margin:10px 0 12px;color:var(--cream-dim);font-size:14px"><b style="color:var(--cream)">One-on-one check:</b> ${esc(m.comp||'Confirm the trainee can perform this module to standard.')}</div>
       ${drLine}
-      <button class="btn btn-gold" onclick="mgrSignOff('${esn}','${m.id}')">Sign off ${esc(m.name)}</button></div>`;}});
+      <button class="btn btn-gold" onclick="mgrSignOff('${esn}','${m.id}')">Sign off ${esc(m.name)}</button>
+      <button class="btn btn-ghost" onclick="runBoard('manager','${esn}','${m.id}')">Run oral board</button></div>`;}});
   if(!awaitingCards)awaitingCards=`<p style="color:var(--cream-dim)">No modules are waiting for your sign-off right now. A module appears here once the trainee passes its written test.</p>`;
   let statusRows='';
   CURRICULUM.forEach(t=>{t.modules.forEach(m=>{const rec=p.modules[m.id];const s=status[m.id];
