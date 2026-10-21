@@ -206,7 +206,7 @@ textarea.dinput{min-height:54px;resize:vertical;line-height:1.4}
 <div class="topbar" id="topbar">
   <div class="brand">
     <div class="crest">CSA</div>
-    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v39</span></div></div>
+    <div><div class="name">Coin Sales Academy</div><div class="sub">Promotion Ladder <span style="opacity:.6">v42</span></div></div>
   </div>
   <div class="topbar-right" id="topbarRight"></div>
 </div>
@@ -1286,6 +1286,7 @@ function renderIdHome(){
       <button class="btn btn-gold" onclick="startIdDrill(false)">Start accuracy run (${IDD_RUN} items)</button>
       <button class="btn btn-gold" onclick="startKeyDrill()">Key Dates drill (${KD_RUN} coins)</button>
       <button class="btn btn-ghost" onclick="renderKeyGallery()">Key Dates Gallery</button>
+      <button class="btn btn-ghost" onclick="PFC.from='';renderIdFlashcards()">Coin ID Flashcards</button>
       ${e.timedUnlocked?`<button class="btn btn-ghost" onclick="startIdDrill(true)">Start timed run (${IDD_TIMED_SECS}s each)</button>`:''}</div></div>`;
   window.scrollTo(0,0);
 }
@@ -1903,6 +1904,7 @@ function renderTopbar(){
     <button class="btn btn-ghost" onclick="renderQuizSetup()">Quiz</button>
     <button class="btn btn-ghost" onclick="renderShortTab()">Short Answer</button>
     <button class="btn btn-ghost" onclick="renderIdHome()">ID Drill</button>
+    <button class="btn btn-ghost" onclick="renderGL()">General Learning</button>
     ${rampOf(n)?'<button class="btn btn-ghost" onclick="renderRamp()">30-Day</button>':''}
     <button class="btn btn-ghost" onclick="renderBest()">Best Calls${getBest().length?' ('+getBest().length+')':''}</button>
     <button class="btn btn-ghost" onclick="logout()">Sign out</button>`:'';
@@ -1939,7 +1941,8 @@ function renderDashboard(){
   const certBtn=programComplete(p)?`<button class="btn btn-gold" onclick="renderCertificate()">View Certificate</button>`:'';
   let html=`<div class="fade"><div class="dash-head"><h1>Your Ladder</h1>
     <div style="display:flex;gap:10px;flex-wrap:wrap">${certBtn}
-      <button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>
+      <button class="btn btn-ghost" onclick="PFC.from='';renderIdFlashcards()">Coin ID Flashcards</button>
+      <button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Flashcards</button>
       <button class="btn btn-ghost" onclick="renderCheatSheet()">Reference Card</button></div></div>
     <div class="progress-meta"><b>${st.passed}</b> of <b>${st.total}</b> modules complete, <b>${st.pct}%</b> through the program</div>
     ${weakestCard(p)}`;
@@ -2797,7 +2800,7 @@ function openModulePreview(id){
     <div class="lesson-actions">
       <button class="btn btn-ghost" onclick="renderPreviewLadder()">Back to modules</button>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        ${isCoin?`<button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>`:''}
+        ${isCoin?`<button class="btn btn-ghost" onclick="PFC.from='';renderIdFlashcards()">Coin ID Flashcards</button><button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Flashcards</button>`:''}
         ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
         ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
         ${hasExplain(id)?`<button class="btn btn-ghost" onclick="startExplain('${id}')">Explain Drill</button>`:''}
@@ -2837,7 +2840,7 @@ function openModule(id){
     const kb=kdOf(currentName()||'').best||0;
     kdPanel=`<div class="standard"><b>Key dates, with the real coins</b><br>
       Study every coin type from the study guide with its key dates, then prove it: the drill shows the coin photo and you tap every key date. Target ${KD_PASS} or higher. ${kb>=KD_PASS?'<span class="pill pill-g">target met</span>':`<span class="pill pill-l">best so far: ${kb}</span>`}
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="renderKeyGallery()">Key Dates Gallery</button><button class="btn btn-gold" onclick="startKeyDrill()">Key Dates drill</button></div></div>`;
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="renderKeyGallery()">Key Dates Gallery</button><button class="btn btn-ghost" onclick="PFC.from='';renderIdFlashcards()">Coin ID Flashcards</button><button class="btn btn-gold" onclick="startKeyDrill()">Key Dates drill</button></div></div>`;
   }
   let shortPanel='';
   if(hasShort(id)){
@@ -2860,7 +2863,7 @@ function openModule(id){
     <div class="lesson-actions">
       <button class="btn btn-ghost" onclick="goDash()">Back to ladder</button>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        ${isCoin?`<button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Drill</button>`:''}
+        ${isCoin?`<button class="btn btn-ghost" onclick="PFC.from='';renderIdFlashcards()">Coin ID Flashcards</button><button class="btn btn-ghost" onclick="renderFlashcards()">Key Dates Flashcards</button>`:''}
         ${moduleDrill(id)?`<button class="btn btn-ghost" onclick="startDrill('${id}')">Practice with AI Customer</button>`:''}
         ${moduleObjections(id)?`<button class="btn btn-ghost" onclick="renderObjectionBank('${id}')">Objection Drills</button>`:''}
         ${cleared?`<button class="btn btn-ghost" onclick="startTest('${id}',true)">Practice (not recorded)</button>`:''}
@@ -3051,7 +3054,7 @@ function renderFlashcards(){
 }
 function renderCard(){
   const idx=FC.order[FC.i];const card=FLASHCARDS[idx];
-  app.innerHTML=`<div class="fade"><div class="dash-head"><h1>Key Dates Drill</h1>
+  app.innerHTML=`<div class="fade"><div class="dash-head"><h1>Key Dates Flashcards</h1>
     <button class="btn btn-gold" onclick="goDash()">Back</button></div>
     <div class="progress-meta">Practice only, nothing is recorded. Tap the card to flip. Card ${FC.i+1} of ${FC.order.length}.</div>
     <div onclick="flipCard()" style="cursor:pointer;min-height:220px;display:grid;place-items:center;text-align:center;
@@ -3073,6 +3076,62 @@ function flipCard(){FC.flip=!FC.flip;renderCard();}
 function nextCard(){FC.i=(FC.i+1)%FC.order.length;FC.flip=false;renderCard();}
 function prevCard(){FC.i=(FC.i-1+FC.order.length)%FC.order.length;FC.flip=false;renderCard();}
 function shuffleCards(){FC.order=shuffle(FLASHCARDS.map((c,i)=>i));FC.i=0;FC.flip=false;renderCard();}
+
+/* ---- coin ID photo flashcards (no record) ---- */
+let PFC={i:0,flip:false,order:[],sec:'All',from:''};
+function renderGL(){
+  PFC.from='';
+  app.innerHTML=`<div class="fade"><div class="dash-head"><h1>General Learning</h1>
+    <button class="btn btn-gold" onclick="goDash()">Back</button></div>
+    <div class="progress-meta">Practice tools for the whole team. Nothing here is scored or recorded.</div>
+    <div class="standard" style="margin-top:0"><b>Coin ID Flashcards</b><br>
+      Real photos from the study guide. Look at the coin, name it, decide buy or route, call the metal, and think of the key dates. Then tap the card to check yourself. Filter by coin type to work one series at a time.
+      <div style="margin-top:12px"><button class="btn btn-gold" onclick="PFC.from='gl';renderIdFlashcards()">Open Coin ID Flashcards</button></div></div>
+  </div>`;
+  window.scrollTo(0,0);
+}
+function pfcBack(){if(PFC.from==='gl')renderGL();else goDash();}
+function pfcPool(){return COINSET.map((c,i)=>i).filter(i=>PFC.sec==='All'||COINSET[i].s===PFC.sec);}
+function renderIdFlashcards(){if(!PFC.order.length)PFC.order=shuffle(pfcPool());PFC.flip=false;renderPhotoCard();}
+function pfcSetSec(v){PFC.sec=v;PFC.order=shuffle(pfcPool());PFC.i=0;PFC.flip=false;renderPhotoCard();}
+function pfcFlip(){PFC.flip=!PFC.flip;renderPhotoCard();}
+function pfcNext(){PFC.i=(PFC.i+1)%PFC.order.length;PFC.flip=false;renderPhotoCard();}
+function pfcPrev(){PFC.i=(PFC.i-1+PFC.order.length)%PFC.order.length;PFC.flip=false;renderPhotoCard();}
+function pfcShuffle(){PFC.order=shuffle(pfcPool());PFC.i=0;PFC.flip=false;renderPhotoCard();}
+function pfcMetal(m){return m==='silver'?'Silver':m.charAt(0).toUpperCase()+m.slice(1);}
+function renderPhotoCard(){
+  const c=COINSET[PFC.order[PFC.i]];const d=KEYDATES[c.id]||{};
+  const secs=['All'];COINSET.forEach(x=>{if(secs.indexOf(x.s)===-1)secs.push(x.s);});
+  const opts=secs.map(s=>`<option value="${s}"${s===PFC.sec?' selected':''}>${s==='All'?'All coin types':s}</option>`).join('');
+  let keys='';
+  if(d.keys&&d.keys.length)keys=`<div style="margin-top:12px;color:var(--gold-bright)"><b>Key dates to flag:</b> ${d.keys.join(', ')}</div>`;
+  else if(d.route)keys=`<div style="margin-top:12px;color:var(--gold-bright)">${d.route}</div>`;
+  else if(d.none)keys=`<div style="margin-top:12px;color:var(--cream-dim)">No key dates. Price it by metal content.</div>`;
+  const note=(d.note&&!d.none)?`<div style="margin-top:8px;font-size:13px;color:var(--cream-dim)">${d.note}</div>`:'';
+  const call=c.a==='buy'?'<span class="pill pill-g">Buy it here</span>':'<span class="pill pill-a">Route it</span>';
+  const imgW=PFC.flip?'220px':'340px';
+  const face=PFC.flip
+    ?`<div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">${c.s}</div>
+      <div class="serif" style="font-size:26px;color:var(--cream)">${c.n}</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">${call}<span class="pill pill-l">${pfcMetal(c.m)}</span></div>${keys}${note}`
+    :`<div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold)">What coin is this?</div>
+      <div style="margin-top:10px;font-size:13px;color:var(--cream-dim)">Name it, buy or route, metal, and the key dates. Then tap to check.</div>`;
+  app.innerHTML=`<div class="fade"><div class="dash-head"><h1>Coin ID Flashcards</h1>
+    <button class="btn btn-gold" onclick="pfcBack()">Back</button></div>
+    <div class="progress-meta">Practice only, nothing is recorded. Real photos from the study guide. Card ${PFC.i+1} of ${PFC.order.length}.</div>
+    <div style="margin:0 0 14px"><select onchange="pfcSetSec(this.value)" aria-label="Coin type" style="background:var(--navy);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;max-width:100%">${opts}</select></div>
+    <div onclick="pfcFlip()" style="cursor:pointer;text-align:center;background:linear-gradient(180deg,rgba(28,52,79,.5),rgba(19,38,61,.4));border:1px solid var(--line);border-radius:18px;padding:22px 18px;box-shadow:var(--shadow)">
+      <img src="${c.d}" onerror="photoMissing(this)" alt="coin" style="max-width:100%;width:${imgW};border-radius:10px;border:1px solid var(--line)">
+      <div style="margin-top:14px">${face}</div>
+      ${!PFC.flip?'<div style="margin-top:12px;font-size:13px;color:var(--cream-dim)">Tap to reveal</div>':''}
+    </div>
+    <div style="display:flex;gap:12px;justify-content:space-between;margin-top:18px">
+      <button class="btn btn-ghost" onclick="pfcPrev()">Previous</button>
+      <button class="btn btn-ghost" onclick="pfcShuffle()">Shuffle</button>
+      <button class="btn btn-gold" onclick="pfcNext()">Next</button>
+    </div></div>`;
+  window.scrollTo(0,0);
+}
 
 /* ---- certificate ---- */
 function renderCertificate(){
